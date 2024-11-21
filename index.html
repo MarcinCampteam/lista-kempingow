@@ -3,55 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista obiektów w bazie CampTeam </title>
+    <title>Lista Kempingów</title>
     <style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        background-color: #f9f9f9;
-    }
-    h1 {
-        font-size: 28px;
-        color: #008000;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    #camping-list {
-        list-style-type: none;
-        padding: 0;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    #camping-list li {
-        background-color: #008000;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        margin: 10px 0;
-        padding: 15px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    #camping-list li:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    #camping-list a {
-        text-decoration: none;
-        color: #007BFF;
-        font-weight: bold;
-    }
-    #camping-list a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-    }
-</style>
+        /* Pasek na górze i dole */
+        .top-bar, .bottom-bar {
+            background-color: #15830d;
+            height: 0.5cm;
+            width: 100%;
+        }
 
+        /* Styl całej strony */
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Tytuł */
+        h1 {
+            font-size: 14px;
+            color: #000000;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Lista kempingów */
+        #camping-list {
+            list-style-type: none;
+            padding: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Styl dla każdego elementu listy */
+        #camping-list li {
+            border: 2px solid #15830d; /* Średniogruba ramka w kolorze zielonym */
+            border-radius: 8px;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 10px;
+            color: #000000; /* Czarny tekst */
+            background-color: #ffffff; /* Białe tło */
+            text-align: center;
+        }
+
+        /* Styl dla linków */
+        #camping-list a {
+            text-decoration: none;
+            color: #000000; /* Czarny kolor linku */
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista obiektów w bazie CampTeam</h1>
+    <!-- Pasek na górze -->
+    <div class="top-bar"></div>
+
+    <!-- Tytuł -->
+    <h1>Lista Kempingów</h1>
+
+    <!-- Lista kempingów -->
     <ul id="camping-list">
-        Ładowanie listy kempingów...
+        <!-- Tu zostaną wczytane elementy kempingów -->
     </ul>
+
+    <!-- Pasek na dole -->
+    <div class="bottom-bar"></div>
+
     <script>
         // Link do statycznego pliku KML
         const kmlUrl = "./map.kml";
@@ -74,7 +91,7 @@
                     const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
                     const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
 
-                    // Filtruj nazwy, które zawierają koordynaty
+                    // Omiń elementy, które w nazwie mają koordynaty
                     if (/\d/.test(name)) continue;
 
                     if (coordinates) {

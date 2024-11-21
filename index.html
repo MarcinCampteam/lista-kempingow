@@ -122,7 +122,7 @@
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");
                         const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                        const detailsLink = `https://sites.google.com/view/kemping-${name.replace(/\s+/g, '-').toLowerCase()}`;
+                        const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/kempingi/${name.replace(/\s+/g, '-').toLowerCase()}?authuser=0`;
 
                         const li = document.createElement("li");
                         li.innerHTML = `

@@ -153,14 +153,15 @@
         <strong style="font-size: 20px;">${name}</strong>
     </span>
     <div class="button-container">
-        <a class="details-button" href="${
-          isInSettings ? detailsLink : "https://campteam.pl/dodaj" // TUTAJ DODAĆ LINK DO DODAWANIA MIEJSCA
-        }" target="_blank">
-            ${isInSettings ? "Szczegóły" : "Dodaj szczegóły"}
-        </a>
+        ${
+          isInSettings
+            ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
+            : ""
+        }
         <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
     </div>
 `;
+
               campingList.appendChild(li);
             }
           }

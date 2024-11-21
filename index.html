@@ -33,8 +33,8 @@
         }
         #camping-list li {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             border: 2px solid #15830d;
             border-radius: 8px;
             margin: 10px 0;
@@ -47,21 +47,30 @@
             text-decoration: none;
             color: #000000;
         }
-        .details-button {
-            width: 25%;
+        .details-button, .map-button {
+            width: 100%;
             padding: 10px;
             text-align: center;
-            background-color: #facc15;
-            color: #000000;
+            color: #ffffff;
             border: none;
             border-radius: 8px;
             font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
+            margin-top: 5px;
+        }
+        .details-button {
+            background-color: #facc15;
         }
         .details-button:hover {
             background-color: #e6b814;
+        }
+        .map-button {
+            background-color: #15830d;
+        }
+        .map-button:hover {
+            background-color: #136b0b;
         }
     </style>
 </head>
@@ -89,8 +98,11 @@
 
                 for (let i = 0; i < placemarks.length; i++) {
                     const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-                    const description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
+                    let description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
                     const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
+
+                    // Usuń prefiks "description:" i odnośniki do zdjęć
+                    description = description.replace(/Opis::|Dodaj zdjęcie lub komentarz.*?<\/br>/gi, "").trim();
 
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");
@@ -99,12 +111,12 @@
 
                         const li = document.createElement("li");
                         li.innerHTML = `
-                            <span style="width: 75%;">
+                            <span style="width: 100%; margin-bottom: 10px;">
                                 <strong>${name}</strong><br>
-                                <small>${description}</small><br>
-                                <a href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+                                <small>${description}</small>
                             </span>
                             <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
+                            <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
                         `;
                         campingList.appendChild(li);
                     }

@@ -1,150 +1,192 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lista Kempingów</title>
     <style>
-        .top-bar, .bottom-bar {
-            background-color: #15830d;
-            height: 0.5cm;
-            width: 100%;
-        }
-        body {
-            font-family: 'Open Sans', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        #search-bar {
-            display: block;
-            margin: 20px auto 20px;
-            width: 80%;
-            padding: 12px;
-            font-size: 12px;
-            border: 3px solid #15830d;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        #camping-list {
-            list-style-type: none;
-            padding: 0;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        #camping-list li {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: 2px solid #15830d;
-            border-radius: 8px;
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 12px;
-            color: #000000;
-            background-color: #ffffff;
-        }
-        #camping-list a {
-            text-decoration: none;
-            color: #000000;
-        }
-        .button-container {
-            display: flex;
-            justify-content: center; /* Wyśrodkowanie przycisków */
-            gap: 10px; /* Odstęp między przyciskami */
-            width: 100%;
-            margin-top: 10px;
-        }
-        .details-button, .map-button {
-            width: 35%; /* Jeszcze mniejsze przyciski */
-            padding: 8px; /* Zmniejszony padding */
-            text-align: center;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            font-size: 10px; /* Zmniejszona czcionka */
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .details-button {
-            background-color: #facc15; /* Żółty */
-        }
-        .details-button:hover {
-            background-color: #e6b814;
-        }
-        .map-button {
-            background-color: #15830d; /* Zielony */
-        }
-        .map-button:hover {
-            background-color: #136b0b;
-        }
+      .top-bar,
+      .bottom-bar {
+        background-color: #15830d;
+        height: 0.5cm;
+        width: 100%;
+      }
+      body {
+        font-family: "Open Sans", sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      #search-bar {
+        display: block;
+        margin: 20px auto 20px;
+        width: 80%;
+        padding: 12px;
+        font-size: 12px;
+        border: 3px solid #15830d;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+      #camping-list {
+        list-style-type: none;
+        padding: 0;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      #camping-list li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        margin: 10px 0;
+        padding: 10px;
+        font-size: 12px;
+        color: #000000;
+        background-color: #ffffff;
+      }
+      #camping-list a {
+        text-decoration: none;
+        color: #000000;
+      }
+      .button-container {
+        display: flex;
+        justify-content: center; /* Wyśrodkowanie przycisków */
+        gap: 10px; /* Odstęp między przyciskami */
+        width: 100%;
+        margin-top: 10px;
+      }
+      .details-button,
+      .map-button {
+        width: 35%; /* Jeszcze mniejsze przyciski */
+        padding: 8px; /* Zmniejszony padding */
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 10px; /* Zmniejszona czcionka */
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .details-button {
+        background-color: #facc15; /* Żółty */
+      }
+      .details-button:hover {
+        background-color: #e6b814;
+      }
+      .map-button {
+        background-color: #15830d; /* Zielony */
+      }
+      .map-button:hover {
+        background-color: #136b0b;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="top-bar"></div>
-    <input type="text" id="search-bar" placeholder="Wyszukaj obiekt">
+    <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
     <ul id="camping-list"></ul>
     <div class="bottom-bar"></div>
 
     <script>
-        const kmlUrl = "./map.kml";
+      const kmlUrl = "./map.kml";
+      const settingsUrl = "./settings.json";
 
-        async function loadCampingList() {
-            try {
-                const response = await fetch(kmlUrl);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      async function loadSettings() {
+        try {
+          const response = await fetch(settingsUrl);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
 
-                const kmlText = await response.text();
-                const parser = new DOMParser();
-                const kml = parser.parseFromString(kmlText, "application/xml");
+          const settings = await response.json();
+          const campingNames = settings.camping_sites.map((site) =>
+            site.name.toLowerCase()
+          );
+          return campingNames;
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku settings.json:", error);
+          return [];
+        }
+      }
 
-                const placemarks = kml.getElementsByTagName("Placemark");
-                const campingList = document.getElementById("camping-list");
-                campingList.innerHTML = ""; // Wyczyść listę przed dodaniem
+      async function loadCampingList() {
+        const campingNamesFromSettings = await loadSettings();
 
-                for (let i = 0; i < placemarks.length; i++) {
-                    const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-                    const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
+        try {
+          const response = await fetch(kmlUrl);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
 
-                    // Pomijamy nazwy zawierające liczby i znaki interpunkcyjne typowe dla koordynatów
-                    if (/[0-9.,-]/.test(name)) continue;
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
 
-                    if (coordinates) {
-                        const [lon, lat] = coordinates.split(",");
-                        const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                        const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/${name.replace(/\s+/g, '-').toLowerCase()}?authuser=0`;
+          const placemarks = kml.getElementsByTagName("Placemark");
+          const campingList = document.getElementById("camping-list");
+          campingList.innerHTML = ""; // Wyczyść listę przed dodaniem
 
-                        const li = document.createElement("li");
-                        li.innerHTML = `
-                            <span style="width: 100%; text-align: center; margin-bottom: 10px;">
-                                <strong style="font-size: 20px;">${name}</strong>
-                            </span>
-                            <div class="button-container">
-                                <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
-                                <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
-                            </div>
-                        `;
-                        campingList.appendChild(li);
-                    }
-                }
-            } catch (error) {
-                console.error("Błąd podczas wczytywania pliku KML:", error);
-                document.getElementById("camping-list").innerText = "Nie udało się wczytać listy kempingów.";
+          for (let i = 0; i < placemarks.length; i++) {
+            const name =
+              placemarks[i].getElementsByTagName("name")[0]?.textContent ||
+              "Brak nazwy";
+            const coordinates = placemarks[i]
+              .getElementsByTagName("coordinates")[0]
+              ?.textContent.trim();
+
+            // Pomijamy nazwy zawierające liczby i znaki interpunkcyjne typowe dla koordynatów
+            if (/[0-9.,-]/.test(name)) continue;
+
+            if (coordinates) {
+              const [lon, lat] = coordinates.split(",");
+              const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+              const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/${name
+                .replace(/\s+/g, "-")
+                .toLowerCase()}?authuser=0`;
+
+              const li = document.createElement("li");
+              const isInSettings = campingNamesFromSettings.includes(
+                name.toLowerCase()
+              );
+
+              li.innerHTML = `
+    <span style="width: 100%; text-align: center; margin-bottom: 10px;">
+        <strong style="font-size: 20px;">${name}</strong>
+    </span>
+    <div class="button-container">
+        <a class="details-button" href="${
+          isInSettings ? detailsLink : "https://campteam.pl/dodaj" // TUTAJ DODAĆ LINK DO DODAWANIA MIEJSCA
+        }" target="_blank">
+            ${isInSettings ? "Szczegóły" : "Dodaj szczegóły"}
+        </a>
+        <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+    </div>
+`;
+              campingList.appendChild(li);
             }
+          }
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku KML:", error);
+          document.getElementById("camping-list").innerText =
+            "Nie udało się wczytać listy kempingów.";
         }
+      }
 
-        function filterCampingList() {
-            const searchTerm = document.getElementById("search-bar").value.toLowerCase();
-            const listItems = document.querySelectorAll("#camping-list li");
+      function filterCampingList() {
+        const searchTerm = document
+          .getElementById("search-bar")
+          .value.toLowerCase();
+        const listItems = document.querySelectorAll("#camping-list li");
 
-            listItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(searchTerm) ? "" : "none";
-            });
-        }
+        listItems.forEach((item) => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(searchTerm) ? "" : "none";
+        });
+      }
 
-        document.getElementById("search-bar").addEventListener("input", filterCampingList);
-        loadCampingList();
+      document
+        .getElementById("search-bar")
+        .addEventListener("input", filterCampingList);
+      loadCampingList();
     </script>
-</body>
+  </body>
 </html>

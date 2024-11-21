@@ -27,6 +27,17 @@
             margin: 20px 0;
         }
 
+        /* Pole wyszukiwania */
+        #search-bar {
+            display: block;
+            margin: 0 auto 20px;
+            width: 80%;
+            padding: 10px;
+            font-size: 12px;
+            border: 2px solid #15830d;
+            border-radius: 8px;
+        }
+
         /* Lista kempingów */
         #camping-list {
             list-style-type: none;
@@ -60,6 +71,9 @@
 
     <!-- Tytuł -->
     <h1>Lista Kempingów</h1>
+
+    <!-- Wyszukiwarka -->
+    <input type="text" id="search-bar" placeholder="Szukaj kempingu...">
 
     <!-- Lista kempingów -->
     <ul id="camping-list">
@@ -107,6 +121,24 @@
                 document.getElementById("camping-list").innerText = "Nie udało się wczytać listy kempingów.";
             }
         }
+
+        // Funkcja filtrowania listy
+        function filterCampingList() {
+            const searchTerm = document.getElementById("search-bar").value.toLowerCase();
+            const listItems = document.querySelectorAll("#camping-list li");
+
+            listItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        // Dodaj nasłuchiwanie na zmianę w polu wyszukiwania
+        document.getElementById("search-bar").addEventListener("input", filterCampingList);
 
         // Wywołanie funkcji po załadowaniu strony
         loadCampingList();

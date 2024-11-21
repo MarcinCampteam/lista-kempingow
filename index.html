@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+    <title>Lista Kempingów</title>
     <style>
-        /* Pasek na górze i dole */
         .top-bar, .bottom-bar {
             background-color: #15830d;
             height: 0.5cm;
             width: 100%;
         }
-
-        /* Styl całej strony */
         body {
             font-family: 'Open Sans', sans-serif;
             margin: 0;
             padding: 0;
         }
-
-        /* Pole wyszukiwania */
         #search-bar {
             display: block;
             margin: 20px auto 20px;
@@ -30,75 +25,55 @@
             border-radius: 8px;
             font-weight: bold;
         }
-
-        /* Lista kempingów */
         #camping-list {
             list-style-type: none;
             padding: 0;
             max-width: 600px;
             margin: 0 auto;
         }
-
-        /* Styl dla każdego elementu listy */
         #camping-list li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 2px solid #15830d; /* Średniogruba ramka w kolorze zielonym */
+            border: 2px solid #15830d;
             border-radius: 8px;
             margin: 10px 0;
             padding: 10px;
-            font-size: 10px;
-            color: #000000; /* Czarny tekst */
-            background-color: #ffffff; /* Białe tło */
+            font-size: 12px;
+            color: #000000;
+            background-color: #ffffff;
         }
-
-        /* Styl dla linków */
         #camping-list a {
             text-decoration: none;
-            color: #000000; /* Czarny kolor linku */
+            color: #000000;
         }
-
-        /* Styl dla przycisków */
         .details-button {
-            width: 25%; /* 1/4 szerokości */
+            width: 25%;
             padding: 10px;
             text-align: center;
-            background-color: #facc15; /* Żółty */
-            color: #000000; /* Czarny tekst */
+            background-color: #facc15;
+            color: #000000;
             border: none;
             border-radius: 8px;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
         }
-
         .details-button:hover {
-            background-color: #e6b814; /* Ciemniejszy żółty na hover */
+            background-color: #e6b814;
         }
     </style>
 </head>
 <body>
-    <!-- Pasek na górze -->
     <div class="top-bar"></div>
-
-    <!-- Wyszukiwarka -->
     <input type="text" id="search-bar" placeholder="Wyszukaj obiekt">
-
-    <!-- Lista kempingów -->
-    <ul id="camping-list">
-        <!-- Tu zostaną wczytane elementy kempingów -->
-    </ul>
-
-    <!-- Pasek na dole -->
+    <ul id="camping-list"></ul>
     <div class="bottom-bar"></div>
 
     <script>
-        // Link do statycznego pliku KML
         const kmlUrl = "./map.kml";
 
-        // Funkcja wczytująca dane z pliku KML
         async function loadCampingList() {
             try {
                 const response = await fetch(kmlUrl);
@@ -114,10 +89,8 @@
 
                 for (let i = 0; i < placemarks.length; i++) {
                     const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+                    const description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
                     const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
-
-                    // Omiń elementy, które w nazwie mają koordynaty
-                    if (/\d/.test(name)) continue;
 
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");
@@ -126,7 +99,11 @@
 
                         const li = document.createElement("li");
                         li.innerHTML = `
-                            <span style="width: 75%;"><a href="${googleMapsLink}" target="_blank">${name}</a></span>
+                            <span style="width: 75%;">
+                                <strong>${name}</strong><br>
+                                <small>${description}</small><br>
+                                <a href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+                            </span>
                             <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
                         `;
                         campingList.appendChild(li);
@@ -138,25 +115,17 @@
             }
         }
 
-        // Funkcja filtrowania listy
         function filterCampingList() {
             const searchTerm = document.getElementById("search-bar").value.toLowerCase();
             const listItems = document.querySelectorAll("#camping-list li");
 
             listItems.forEach(item => {
                 const text = item.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    item.style.display = "";
-                } else {
-                    item.style.display = "none";
-                }
+                item.style.display = text.includes(searchTerm) ? "" : "none";
             });
         }
 
-        // Dodaj nasłuchiwanie na zmianę w polu wyszukiwania
         document.getElementById("search-bar").addEventListener("input", filterCampingList);
-
-        // Wywołanie funkcji po załadowaniu strony
         loadCampingList();
     </script>
 </body>

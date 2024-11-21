@@ -34,7 +34,7 @@
         #camping-list li {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             border: 2px solid #15830d;
             border-radius: 8px;
             margin: 10px 0;
@@ -48,7 +48,7 @@
             color: #000000;
         }
         .details-button, .map-button {
-            width: 100%;
+            width: 80%;
             padding: 10px;
             text-align: center;
             color: #ffffff;
@@ -58,16 +58,16 @@
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
-            margin-top: 5px;
+            margin: 5px auto;
         }
         .details-button {
-            background-color: #facc15;
+            background-color: #f00; /* Czerwony */
         }
         .details-button:hover {
-            background-color: #e6b814;
+            background-color: #d00;
         }
         .map-button {
-            background-color: #15830d;
+            background-color: #15830d; /* Zielony */
         }
         .map-button:hover {
             background-color: #136b0b;
@@ -101,8 +101,12 @@
                     let description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
                     const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
 
-                    // Usuń prefiks "description:" i odnośniki do zdjęć
-                    description = description.replace(/Opis::|Dodaj zdjęcie lub komentarz.*?<\/br>/gi, "").trim();
+                    // Wyciągnij numer telefonu i link do dodania zdjęć/komentarzy
+                    const phoneMatch = description.match(/phone:\s*([^\n]+)/i);
+                    const phone = phoneMatch ? phoneMatch[1].trim() : "Brak telefonu";
+
+                    const addPhotoMatch = description.match(/Dodaj zdjęcia lub komentarz.*?(http[^\s]+)/i);
+                    const addPhotoLink = addPhotoMatch ? addPhotoMatch[1] : "#";
 
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");
@@ -111,9 +115,10 @@
 
                         const li = document.createElement("li");
                         li.innerHTML = `
-                            <span style="width: 100%; margin-bottom: 10px;">
+                            <span style="width: 100%; text-align: center; margin-bottom: 10px;">
                                 <strong>${name}</strong><br>
-                                <small>${description}</small>
+                                <small>Telefon: ${phone}</small><br>
+                                <small><a href="${addPhotoLink}" target="_blank">Dodaj zdjęcia lub komentarz o tym miejscu</a></small>
                             </span>
                             <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
                             <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>

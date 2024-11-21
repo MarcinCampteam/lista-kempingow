@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Kempingów</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        #camping-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #camping-list li {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        #camping-list a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        #camping-list a:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista Kempingów</h1>
+    <ul id="camping-list">
+        Ładowanie listy kempingów...
+    </ul>
+    <script>
+        // Link do statycznego pliku KML
+        const kmlUrl = "./map.kml";
+
+        // Funkcja wczytująca dane z pliku KML
+        async function loadCampingList() {
+            try {
+                const response = await fetch(kmlUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const kmlText = await response.text();
+                const parser = new DOMParser();
+                const kml = parser.parseFromString(kmlText, "application/xml");
+
+                const placemarks = kml.getElementsByTagName("Placemark");
+                const campingList = document.getElementById("camping-list");
+                campingList.innerHTML = ""; // Wyczyść listę przed dodaniem
+
+                for (let i = 0; i < placemarks.length; i++) {
+                    const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+                    const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
+
+                    // Filtruj nazwy, które zawierają koordynaty
+                    if (/\d/.test(name)) continue;
+
+                    if (coordinates) {
+                        const [lon, lat] = coordinates.split(",");
+                        const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        const li = document.createElement("li");
+                        li.innerHTML = `<a href="${googleMapsLink}" target="_blank">${name}</a>`;
+                        campingList.appendChild(li);
+                    }
+                }
+            } catch (error) {
+                console.error("Błąd podczas wczytywania pliku KML:", error);
+                document.getElementById("camping-list").innerText = "Nie udało się wczytać listy kempingów.";
+            }
+        }
+
+        // Wywołanie funkcji po załadowaniu strony
+        loadCampingList();
+    </script>
+</body>
+</html>

@@ -106,8 +106,8 @@
                     const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
                     const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
 
-                    // Pomijamy nazwy zawierające koordynaty
-                    if (/\d+,\d+/.test(name)) continue;
+                    // Pomijamy nazwy zawierające liczby i znaki interpunkcyjne typowe dla koordynatów
+                    if (/[0-9.,-]/.test(name)) continue;
 
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");

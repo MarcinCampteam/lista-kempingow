@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista Kempingów</title>
     <style>
-   <style>
     body {
         font-family: Arial, sans-serif;
         margin: 20px;
@@ -29,9 +28,24 @@
         border-radius: 8px;
         margin: 10px 0;
         padding: 15px;
-        box-shadow: 0 2p
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    #camping-list li:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #camping-list a {
+        text-decoration: none;
+        color: #007BFF;
+        font-weight: bold;
+    }
+    #camping-list a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+</style>
 
-    </style>
 </head>
 <body>
     <h1>Lista Kempingów</h1>

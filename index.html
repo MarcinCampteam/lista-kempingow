@@ -47,8 +47,14 @@
             text-decoration: none;
             color: #000000;
         }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
         .details-button, .map-button {
-            width: 80%;
+            width: 40%; /* Zmniejsz przyciski do 40% szerokości */
             padding: 10px;
             text-align: center;
             color: #ffffff;
@@ -58,7 +64,6 @@
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
-            margin: 5px auto;
         }
         .details-button {
             background-color: #facc15; /* Żółty */
@@ -111,10 +116,12 @@
                         const li = document.createElement("li");
                         li.innerHTML = `
                             <span style="width: 100%; text-align: center; margin-bottom: 10px;">
-                                   <strong style="font-size: 20px;">${name}</strong>
+                                <strong style="font-size: 20px;">${name}</strong>
                             </span>
-                            <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
-                            <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+                            <div class="button-container">
+                                <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
+                                <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+                            </div>
                         `;
                         campingList.appendChild(li);
                     }

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
     <style>
         /* Pasek na górze i dole */
         .top-bar, .bottom-bar {
@@ -18,23 +19,16 @@
             padding: 0;
         }
 
-        /* Tytuł */
-        h1 {
-            font-size: 14px;
-            color: #000000;
-            text-align: center;
-            margin: 20px 0;
-        }
-
         /* Pole wyszukiwania */
         #search-bar {
             display: block;
-            margin: 0 auto 20px;
+            margin: 20px auto 20px;
             width: 80%;
-            padding: 10px;
+            padding: 12px;
             font-size: 12px;
-            border: 2px solid #15830d;
+            border: 3px solid #15830d;
             border-radius: 8px;
+            font-weight: bold;
         }
 
         /* Lista kempingów */
@@ -47,6 +41,9 @@
 
         /* Styl dla każdego elementu listy */
         #camping-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border: 2px solid #15830d; /* Średniogruba ramka w kolorze zielonym */
             border-radius: 8px;
             margin: 10px 0;
@@ -54,7 +51,6 @@
             font-size: 10px;
             color: #000000; /* Czarny tekst */
             background-color: #ffffff; /* Białe tło */
-            text-align: center;
         }
 
         /* Styl dla linków */
@@ -62,17 +58,33 @@
             text-decoration: none;
             color: #000000; /* Czarny kolor linku */
         }
+
+        /* Styl dla przycisków */
+        .details-button {
+            width: 25%; /* 1/4 szerokości */
+            padding: 10px;
+            text-align: center;
+            background-color: #facc15; /* Żółty */
+            color: #000000; /* Czarny tekst */
+            border: none;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .details-button:hover {
+            background-color: #e6b814; /* Ciemniejszy żółty na hover */
+        }
     </style>
 </head>
 <body>
     <!-- Pasek na górze -->
     <div class="top-bar"></div>
 
-    <!-- Tytuł -->
-    <h1>Lista Kempingów</h1>
-
     <!-- Wyszukiwarka -->
-    <input type="text" id="search-bar" placeholder="Szukaj kempingu...">
+    <input type="text" id="search-bar" placeholder="Wyszukaj obiekt">
 
     <!-- Lista kempingów -->
     <ul id="camping-list">
@@ -110,8 +122,13 @@
                     if (coordinates) {
                         const [lon, lat] = coordinates.split(",");
                         const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        const detailsLink = `https://sites.google.com/view/kemping-${name.replace(/\s+/g, '-').toLowerCase()}`;
+
                         const li = document.createElement("li");
-                        li.innerHTML = `<a href="${googleMapsLink}" target="_blank">${name}</a>`;
+                        li.innerHTML = `
+                            <span style="width: 75%;"><a href="${googleMapsLink}" target="_blank">${name}</a></span>
+                            <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
+                        `;
                         campingList.appendChild(li);
                     }
                 }

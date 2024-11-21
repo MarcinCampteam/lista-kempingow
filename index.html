@@ -80,6 +80,23 @@
       .map-button:hover {
         background-color: #136b0b;
       }
+      .opinion {
+        background-color: white;
+        border: #000000 1px solid;
+        width: 35%; /* Jeszcze mniejsze przyciski */
+        padding: 8px; /* Zmniejszony padding */
+        text-align: center;
+        color: #ffffff;
+
+        border-radius: 8px;
+        font-size: 10px; /* Zmniejszona czcionka */
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .opinion:hover {
+        background-color: #e7e7e7;
+      }
     </style>
   </head>
   <body>
@@ -132,6 +149,17 @@
             const coordinates = placemarks[i]
               .getElementsByTagName("coordinates")[0]
               ?.textContent.trim();
+            const description =
+              placemarks[i].getElementsByTagName("description")[0]
+                ?.textContent || "";
+
+            // Wyciągnij link z description, który zaczyna się od https
+            const urlMatch = description.match(
+              /https?:\/\/[^\s"<]*campteam[^\s"<]*/i
+            );
+
+            const addLink = urlMatch ? urlMatch[0] : "#";
+            console.log(urlMatch);
 
             // Pomijamy nazwy zawierające liczby i znaki interpunkcyjne typowe dla koordynatów
             if (/[0-9.,-]/.test(name)) continue;
@@ -139,7 +167,7 @@
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-              const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/${name
+              const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/kempingi/${name
                 .replace(/\s+/g, "-")
                 .toLowerCase()}?authuser=0`;
 
@@ -149,19 +177,18 @@
               );
 
               li.innerHTML = `
-    <span style="width: 100%; text-align: center; margin-bottom: 10px;">
-        <strong style="font-size: 20px;">${name}</strong>
-    </span>
-    <div class="button-container">
-        ${
-          isInSettings
-            ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
-            : ""
-        }
-        <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
-    </div>
-`;
-
+              <span style="width: 100%; text-align: center; margin-bottom: 10px;">
+                  <strong style="font-size: 20px;">${name}</strong>
+              </span>
+              <div class="button-container">
+                  ${
+                    isInSettings
+                      ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
+                      : `<a class="opinion" href="${addLink}" target="_blank" ">Dodaj Opinie</a>`
+                  }
+                  <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+              </div>
+          `;
               campingList.appendChild(li);
             }
           }

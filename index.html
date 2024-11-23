@@ -173,6 +173,13 @@
           document.getElementById("search-bar").value.toLowerCase()
         );
         const listItems = document.querySelectorAll("#camping-list li");
+
+        // Ukryj wszystkie elementy, jeśli pole wyszukiwania jest puste
+        if (!searchTerm) {
+          listItems.forEach((item) => item.classList.remove("visible"));
+          return;
+        }
+
         let visibleCount = 0;
 
         listItems.forEach((item) => {

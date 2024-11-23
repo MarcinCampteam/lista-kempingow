@@ -90,13 +90,14 @@
         height: 600px;
         margin-top: 20px;
       }
-      .add-link {
-        text-decoration: none;
-        color: #0066cc;
+      .add-opinion-link {
         font-size: 12px;
         font-weight: bold;
+        color: #0066cc;
+        text-decoration: none;
+        margin-top: 5px;
       }
-      .add-link:hover {
+      .add-opinion-link:hover {
         color: #003399;
       }
     </style>
@@ -114,7 +115,7 @@
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup();
       const markers = [];
-      const maxVisibleItems = 3;
+      const maxVisibleItems = 2; // Wyświetlaj maksymalnie 2 wyniki
 
       // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -141,7 +142,7 @@
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-              const addLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
+              const addOpinionLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
 
               const li = document.createElement("li");
               if (i < maxVisibleItems) li.classList.add("visible");
@@ -152,7 +153,7 @@
                 </span>
                 <div class="button-container">
                     <a class="details-button" href="${googleMapsLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
-                    <a class="add-link" href="${addLink}" target="_blank">Dodaj na CampTeam</a>
+                    <a class="add-opinion-link" href="${addOpinionLink}" target="_blank">https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99</a>
                     <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;

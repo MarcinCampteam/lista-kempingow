@@ -24,7 +24,7 @@
       }
       #search-bar {
         display: block;
-        margin: 20px auto 20px;
+        margin: 20px auto;
         width: 80%;
         padding: 12px;
         font-size: 12px;
@@ -39,7 +39,7 @@
         margin: 0 auto;
       }
       #camping-list li {
-        display: flex;
+        display: none;
         flex-direction: column;
         align-items: center;
         border: 2px solid #15830d;
@@ -49,6 +49,24 @@
         font-size: 12px;
         color: #000000;
         background-color: #ffffff;
+      }
+      #camping-list li.visible {
+        display: flex;
+      }
+      #show-more {
+        display: block;
+        margin: 10px auto;
+        padding: 10px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #ffffff;
+        background-color: #15830d;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #show-more:hover {
+        background-color: #136b0b;
       }
       #map {
         width: 100%;
@@ -87,59 +105,30 @@
       .map-button:hover {
         background-color: #136b0b;
       }
-      .opinion {
-        background-color: white;
-        border: #000000 1px solid;
-        width: 35%;
-        padding: 8px;
-        text-align: center;
-        color: #000000;
-        border-radius: 8px;
-        font-size: 10px;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: none;
-      }
-      .opinion:hover {
-        background-color: #e7e7e7;
-      }
     </style>
   </head>
   <body>
     <div class="top-bar"></div>
     <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
     <ul id="camping-list"></ul>
+    <button id="show-more">Pokaż więcej</button>
     <div id="map"></div>
     <div class="bottom-bar"></div>
 
     <script>
       const kmlUrl = "./map.kml";
-      const settingsUrl = "./settings.json";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup();
       const markers = [];
+      const maxVisibleItems = 3;
 
       // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      async function loadSettings() {
-        try {
-          const response = await fetch(settingsUrl);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          const settings = await response.json();
-          return settings.camping_sites.map((site) => site.name.toLowerCase());
-        } catch (error) {
-          console.error("Błąd podczas wczytywania pliku settings.json:", error);
-          return [];
-        }
-      }
-
       async function loadCampingList() {
-        const campingNamesFromSettings = await loadSettings();
-
         try {
           const response = await fetch(kmlUrl);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -155,22 +144,21 @@
           for (let i = 0; i < placemarks.length; i++) {
             const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
-            const description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-              const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/${name
-                .replace(/\s+/g, "-")
-                .toLowerCase()}?authuser=0`;
 
               const li = document.createElement("li");
+              li.classList.add("visible");
+              if (i >= maxVisibleItems) li.classList.remove("visible");
+
               li.innerHTML = `
                 <span style="width: 100%; text-align: center; margin-bottom: 10px;">
                     <strong style="font-size: 20px;">${name}</strong>
                 </span>
                 <div class="button-container">
-                    <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
+                    <a class="details-button" href="${googleMapsLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
                     <a class="map-button" href="${googleMapsLink}" target="_blank">Prowadź do</a>
                 </div>
               `;
@@ -202,15 +190,25 @@
         );
         markers.forEach((item) => {
           const isVisible = removeAccents(item.name.toLowerCase()).includes(searchTerm);
-          item.marker.remove(); // Usuń wszystkie markery z mapy
           if (isVisible) {
-            map.setView([item.lat, item.lon], 14); // Przybliżenie do wyszukanego miejsca
-            item.marker.addTo(map); // Dodaj wyszukany marker
+            map.setView([item.lat, item.lon], 14);
+            item.marker.openPopup();
           }
         });
       }
 
+      function showMoreItems() {
+        const items = document.querySelectorAll("#camping-list li");
+        let hiddenItems = Array.from(items).filter((item) => !item.classList.contains("visible"));
+        hiddenItems.slice(0, maxVisibleItems).forEach((item) => item.classList.add("visible"));
+
+        if (hiddenItems.length <= maxVisibleItems) {
+          document.getElementById("show-more").style.display = "none";
+        }
+      }
+
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-more").addEventListener("click", showMoreItems);
       loadCampingList();
     </script>
   </body>

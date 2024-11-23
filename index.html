@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lista Kempingów</title>
+    <title>Lista Kempingów z Mapą</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
     <style>
       .top-bar,
       .bottom-bar {
@@ -44,38 +50,39 @@
         color: #000000;
         background-color: #ffffff;
       }
-      #camping-list a {
-        text-decoration: none;
-        color: #000000;
+      #map {
+        width: 100%;
+        height: 600px;
+        margin-top: 20px;
       }
       .button-container {
         display: flex;
-        justify-content: center; /* Wyśrodkowanie przycisków */
-        gap: 10px; /* Odstęp między przyciskami */
+        justify-content: center;
+        gap: 10px;
         width: 100%;
         margin-top: 10px;
       }
       .details-button,
       .map-button {
-        width: 35%; /* Jeszcze mniejsze przyciski */
-        padding: 8px; /* Zmniejszony padding */
+        width: 35%;
+        padding: 8px;
         text-align: center;
         color: #ffffff;
         border: none;
         border-radius: 8px;
-        font-size: 10px; /* Zmniejszona czcionka */
+        font-size: 10px;
         font-weight: bold;
         cursor: pointer;
         text-decoration: none;
       }
       .details-button {
-        background-color: #facc15; /* Żółty */
+        background-color: #facc15;
       }
       .details-button:hover {
         background-color: #e6b814;
       }
       .map-button {
-        background-color: #15830d; /* Zielony */
+        background-color: #15830d;
       }
       .map-button:hover {
         background-color: #136b0b;
@@ -83,12 +90,12 @@
       .opinion {
         background-color: white;
         border: #000000 1px solid;
-        width: 35%; /* Jeszcze mniejsze przyciski */
-        padding: 8px; /* Zmniejszony padding */
+        width: 35%;
+        padding: 8px;
         text-align: center;
         color: #000000;
         border-radius: 8px;
-        font-size: 10px; /* Zmniejszona czcionka */
+        font-size: 10px;
         font-weight: bold;
         cursor: pointer;
         text-decoration: none;
@@ -102,23 +109,28 @@
     <div class="top-bar"></div>
     <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
     <ul id="camping-list"></ul>
+    <div id="map"></div>
     <div class="bottom-bar"></div>
 
     <script>
       const kmlUrl = "./map.kml";
       const settingsUrl = "./settings.json";
 
+      const map = L.map("map").setView([52.237049, 21.017532], 6);
+      const markerCluster = L.markerClusterGroup();
+      const markers = [];
+
+      // Dodanie warstwy OpenStreetMap
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
       async function loadSettings() {
         try {
           const response = await fetch(settingsUrl);
-          if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
-
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const settings = await response.json();
-          const campingNames = settings.camping_sites.map((site) =>
-            site.name.toLowerCase()
-          );
-          return campingNames;
+          return settings.camping_sites.map((site) => site.name.toLowerCase());
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku settings.json:", error);
           return [];
@@ -130,8 +142,7 @@
 
         try {
           const response = await fetch(kmlUrl);
-          if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
           const kmlText = await response.text();
           const parser = new DOMParser();
@@ -139,25 +150,12 @@
 
           const placemarks = kml.getElementsByTagName("Placemark");
           const campingList = document.getElementById("camping-list");
-          campingList.innerHTML = ""; // Wyczyść listę przed dodaniem
+          campingList.innerHTML = "";
 
           for (let i = 0; i < placemarks.length; i++) {
-            const name =
-              placemarks[i].getElementsByTagName("name")[0]?.textContent ||
-              "Brak nazwy";
-            const coordinates = placemarks[i]
-              .getElementsByTagName("coordinates")[0]
-              ?.textContent.trim();
-            const description =
-              placemarks[i].getElementsByTagName("description")[0]
-                ?.textContent || "";
-
-            // Wyciągnij link z description, który zaczyna się od https
-            const urlMatch = description.match(
-              /https?:\/\/[^\s"<]*campteam[^\s"<]*/i
-            );
-
-            const addLink = urlMatch ? urlMatch[0] : "#";
+            const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
+            const description = placemarks[i].getElementsByTagName("description")[0]?.textContent || "";
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
@@ -167,26 +165,26 @@
                 .toLowerCase()}?authuser=0`;
 
               const li = document.createElement("li");
-              const isInSettings = campingNamesFromSettings.includes(
-                name.toLowerCase()
-              );
-
               li.innerHTML = `
-              <span style="width: 100%; text-align: center; margin-bottom: 10px;">
-                  <strong style="font-size: 20px;">${name}</strong>
-              </span>
-              <div class="button-container">
-                  ${
-                    isInSettings
-                      ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
-                      : `<a class="opinion" href="${addLink}" target="_blank">Dodaj Opinie</a>`
-                  }
-                  <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
-              </div>
-          `;
+                <span style="width: 100%; text-align: center; margin-bottom: 10px;">
+                    <strong style="font-size: 20px;">${name}</strong>
+                </span>
+                <div class="button-container">
+                    <a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>
+                    <a class="map-button" href="${googleMapsLink}" target="_blank">Prowadź do</a>
+                </div>
+              `;
+
               campingList.appendChild(li);
+
+              // Dodaj marker na mapę
+              const marker = L.marker([lat, lon]);
+              marker.bindPopup(`<strong>${name}</strong>`);
+              markerCluster.addLayer(marker);
+              markers.push({ marker, name, lat, lon });
             }
           }
+          map.addLayer(markerCluster);
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
           document.getElementById("camping-list").innerText =
@@ -202,17 +200,17 @@
         const searchTerm = removeAccents(
           document.getElementById("search-bar").value.toLowerCase()
         );
-        const listItems = document.querySelectorAll("#camping-list li");
-
-        listItems.forEach((item) => {
-          const text = removeAccents(item.textContent.toLowerCase());
-          item.style.display = text.includes(searchTerm) ? "" : "none";
+        markers.forEach((item) => {
+          const isVisible = removeAccents(item.name.toLowerCase()).includes(searchTerm);
+          item.marker.remove(); // Usuń wszystkie markery z mapy
+          if (isVisible) {
+            map.setView([item.lat, item.lon], 14); // Przybliżenie do wyszukanego miejsca
+            item.marker.addTo(map); // Dodaj wyszukany marker
+          }
         });
       }
 
-      document
-        .getElementById("search-bar")
-        .addEventListener("input", filterCampingList);
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
       loadCampingList();
     </script>
   </body>

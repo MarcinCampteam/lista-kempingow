@@ -38,7 +38,7 @@
         margin: 0 auto;
       }
       #camping-list li {
-        display: flex;
+        display: none;
         flex-direction: column;
         align-items: center;
         border: 2px solid #15830d;
@@ -49,22 +49,26 @@
         color: #000000;
         background-color: #ffffff;
       }
+      #camping-list li.visible {
+        display: flex;
+      }
       .button-container {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
         gap: 10px;
         width: 100%;
         margin-top: 10px;
       }
       .details-button,
       .map-button {
-        width: 35%;
+        width: 80%;
         padding: 8px;
         text-align: center;
         color: #ffffff;
         border: none;
         border-radius: 8px;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: bold;
         cursor: pointer;
         text-decoration: none;
@@ -86,6 +90,15 @@
         height: 600px;
         margin-top: 20px;
       }
+      .add-link {
+        text-decoration: none;
+        color: #0066cc;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .add-link:hover {
+        color: #003399;
+      }
     </style>
   </head>
   <body>
@@ -101,6 +114,7 @@
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup();
       const markers = [];
+      const maxVisibleItems = 3;
 
       // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -127,14 +141,18 @@
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+              const addLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
 
               const li = document.createElement("li");
+              if (i < maxVisibleItems) li.classList.add("visible");
+
               li.innerHTML = `
                 <span style="width: 100%; text-align: center; margin-bottom: 10px;">
                     <strong style="font-size: 20px;">${name}</strong>
                 </span>
                 <div class="button-container">
                     <a class="details-button" href="${googleMapsLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
+                    <a class="add-link" href="${addLink}" target="_blank">Dodaj na CampTeam</a>
                     <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;
@@ -165,10 +183,17 @@
           document.getElementById("search-bar").value.toLowerCase()
         );
         const listItems = document.querySelectorAll("#camping-list li");
+        let visibleCount = 0;
 
         listItems.forEach((item) => {
           const text = removeAccents(item.textContent.toLowerCase());
-          item.style.display = text.includes(searchTerm) ? "flex" : "none";
+          const matches = text.includes(searchTerm);
+          if (matches && visibleCount < maxVisibleItems) {
+            item.classList.add("visible");
+            visibleCount++;
+          } else {
+            item.classList.remove("visible");
+          }
         });
       }
 

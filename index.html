@@ -86,8 +86,7 @@
         width: 35%; /* Jeszcze mniejsze przyciski */
         padding: 8px; /* Zmniejszony padding */
         text-align: center;
-        color: #ffffff;
-
+        color: #000000;
         border-radius: 8px;
         font-size: 10px; /* Zmniejszona czcionka */
         font-weight: bold;
@@ -159,10 +158,6 @@
             );
 
             const addLink = urlMatch ? urlMatch[0] : "#";
-            console.log(urlMatch);
-
-            // Pomijamy nazwy zawierające liczby i znaki interpunkcyjne typowe dla koordynatów
-            if (/[0-9.,-]/.test(name)) continue;
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
@@ -184,7 +179,7 @@
                   ${
                     isInSettings
                       ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
-                      : `<a class="opinion" href="${addLink}" target="_blank" ">Dodaj Opinie</a>`
+                      : `<a class="opinion" href="${addLink}" target="_blank">Dodaj Opinie</a>`
                   }
                   <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
               </div>

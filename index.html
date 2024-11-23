@@ -161,7 +161,7 @@
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+              const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
               const detailsLink = `https://sites.google.com/view/campteam/lokalizacje/${name
                 .replace(/\s+/g, "-")
                 .toLowerCase()}?authuser=0`;
@@ -179,9 +179,9 @@
                   ${
                     isInSettings
                       ? `<a class="details-button" href="${detailsLink}" target="_blank">Szczegóły</a>`
-                      : `<a class="opinion" href="${addLink}" target="_blank">Dodaj Opinie</a>`
+                      : `<a class="opinion" href="${addLink}" target="_blank">Dodaj zdjęcia lub opinię</a>`
                   }
-                  <a class="map-button" href="${googleMapsLink}" target="_blank">Zobacz na mapie</a>
+                  <a class="map-button" href="${googleMapsLink}" target="_blank">Prowadź do</a>
               </div>
           `;
               campingList.appendChild(li);
@@ -194,14 +194,18 @@
         }
       }
 
+      function removeAccents(str) {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      }
+
       function filterCampingList() {
-        const searchTerm = document
-          .getElementById("search-bar")
-          .value.toLowerCase();
+        const searchTerm = removeAccents(
+          document.getElementById("search-bar").value.toLowerCase()
+        );
         const listItems = document.querySelectorAll("#camping-list li");
 
         listItems.forEach((item) => {
-          const text = item.textContent.toLowerCase();
+          const text = removeAccents(item.textContent.toLowerCase());
           item.style.display = text.includes(searchTerm) ? "" : "none";
         });
       }

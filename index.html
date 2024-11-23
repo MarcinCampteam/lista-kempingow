@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <style>
       .top-bar,
       .bottom-bar {
@@ -219,7 +219,7 @@
         const visibleItems = Array.from(items).filter((item) => item.classList.contains("visible"));
         visibleItems.slice(-maxVisibleItems).forEach((item) => item.classList.remove("visible"));
 
-        if (visibleItems.length <= maxVisibleItems * 2) {
+        if (visibleItems.length <= maxVisibleItems) {
           document.getElementById("show-less").style.display = "none";
         }
         document.getElementById("show-more").style.display = "block";
@@ -231,6 +231,12 @@
         if (lat && lon) {
           document.getElementById("map").style.display = "block";
           map.setView([lat, lon], 14);
+          markerCluster.eachLayer((layer) => {
+            const layerLatLng = layer.getLatLng();
+            if (layerLatLng.lat == lat && layerLatLng.lng == lon) {
+              layer.openPopup();
+            }
+          });
         }
       }
 

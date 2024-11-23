@@ -10,20 +10,38 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Ukryj przewijanie całego dokumentu */
+      }
+
       .top-bar,
       .bottom-bar {
         background-color: #15830d;
         height: 0.5cm;
         width: 100%;
       }
-      body {
-        font-family: "Open Sans", sans-serif;
-        margin: 0;
-        padding: 0;
+
+      #container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
       }
+
+      #search-section {
+        position: fixed; /* Wyszukiwarka zawsze na górze */
+        top: 0;
+        width: 100%;
+        background-color: white;
+        z-index: 1000;
+        border-bottom: 2px solid #15830d;
+      }
+
       #search-bar {
         display: block;
-        margin: 20px auto;
+        margin: 10px auto;
         width: 80%;
         padding: 12px;
         font-size: 12px;
@@ -31,12 +49,16 @@
         border-radius: 8px;
         font-weight: bold;
       }
+
       #camping-list {
         list-style-type: none;
         padding: 0;
-        max-width: 600px;
         margin: 0 auto;
+        max-width: 600px;
+        max-height: 150px; /* Maksymalna wysokość dla wyników */
+        overflow-y: auto; /* Dodaj przewijanie, jeśli lista wyników jest za długa */
       }
+
       #camping-list li {
         display: none;
         flex-direction: column;
@@ -49,9 +71,11 @@
         color: #000000;
         background-color: #ffffff;
       }
+
       #camping-list li.visible {
         display: flex;
       }
+
       .button-container {
         display: flex;
         flex-direction: column;
@@ -60,6 +84,7 @@
         width: 100%;
         margin-top: 10px;
       }
+
       .details-button,
       .map-button {
         width: 80%;
@@ -73,31 +98,38 @@
         cursor: pointer;
         text-decoration: none;
       }
+
       .details-button {
         background-color: #facc15;
       }
+
       .details-button:hover {
         background-color: #e6b814;
       }
+
       .map-button {
         background-color: #15830d;
       }
+
       .map-button:hover {
         background-color: #136b0b;
       }
+
       #map {
-        width: 100%;
-        height: 600px;
-        margin-top: 20px;
+        flex: 1; /* Mapa zajmuje resztę miejsca */
       }
     </style>
   </head>
   <body>
-    <div class="top-bar"></div>
-    <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-    <ul id="camping-list"></ul>
-    <div id="map"></div>
-    <div class="bottom-bar"></div>
+    <div id="container">
+      <!-- Sekcja wyszukiwarki -->
+      <div id="search-section">
+        <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+        <ul id="camping-list"></ul>
+      </div>
+      <!-- Mapa -->
+      <div id="map"></div>
+    </div>
 
     <script>
       const kmlUrl = "./map.kml";

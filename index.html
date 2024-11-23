@@ -90,16 +90,6 @@
         height: 600px;
         margin-top: 20px;
       }
-      .add-opinion-link {
-        font-size: 12px;
-        font-weight: bold;
-        color: #0066cc;
-        text-decoration: none;
-        margin-top: 5px;
-      }
-      .add-opinion-link:hover {
-        color: #003399;
-      }
     </style>
   </head>
   <body>
@@ -141,7 +131,6 @@
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
               const addOpinionLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
 
               const li = document.createElement("li");
@@ -152,8 +141,9 @@
                     <strong style="font-size: 20px;">${name}</strong>
                 </span>
                 <div class="button-container">
-                    <a class="details-button" href="${googleMapsLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
-                    <a class="add-opinion-link" href="${addOpinionLink}" target="_blank">https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99</a>
+                    <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
+                </div>
+                <div class="button-container">
                     <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;

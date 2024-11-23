@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/markercluster.js"></script>
     <style>
       .top-bar,
       .bottom-bar {
@@ -53,9 +52,13 @@
       #camping-list li.visible {
         display: flex;
       }
-      #show-more {
-        display: block;
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
         margin: 10px auto;
+      }
+      .controls button {
         padding: 10px;
         font-size: 12px;
         font-weight: bold;
@@ -65,13 +68,14 @@
         border-radius: 8px;
         cursor: pointer;
       }
-      #show-more:hover {
+      .controls button:hover {
         background-color: #136b0b;
       }
       #map {
         width: 100%;
         height: 600px;
         margin-top: 20px;
+        display: none;
       }
       .button-container {
         display: flex;
@@ -111,7 +115,10 @@
     <div class="top-bar"></div>
     <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
     <ul id="camping-list"></ul>
-    <button id="show-more">Pokaż więcej</button>
+    <div class="controls">
+      <button id="show-more">Pokaż więcej</button>
+      <button id="show-less" style="display: none;">Pokaż mniej</button>
+    </div>
     <div id="map"></div>
     <div class="bottom-bar"></div>
 
@@ -159,7 +166,7 @@
                 </span>
                 <div class="button-container">
                     <a class="details-button" href="${googleMapsLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
-                    <a class="map-button" href="${googleMapsLink}" target="_blank">Prowadź do</a>
+                    <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;
 
@@ -188,12 +195,11 @@
         const searchTerm = removeAccents(
           document.getElementById("search-bar").value.toLowerCase()
         );
-        markers.forEach((item) => {
-          const isVisible = removeAccents(item.name.toLowerCase()).includes(searchTerm);
-          if (isVisible) {
-            map.setView([item.lat, item.lon], 14);
-            item.marker.openPopup();
-          }
+        const listItems = document.querySelectorAll("#camping-list li");
+
+        listItems.forEach((item) => {
+          const text = removeAccents(item.textContent.toLowerCase());
+          item.style.display = text.includes(searchTerm) ? "flex" : "none";
         });
       }
 
@@ -205,10 +211,36 @@
         if (hiddenItems.length <= maxVisibleItems) {
           document.getElementById("show-more").style.display = "none";
         }
+        document.getElementById("show-less").style.display = "block";
+      }
+
+      function showLessItems() {
+        const items = document.querySelectorAll("#camping-list li");
+        const visibleItems = Array.from(items).filter((item) => item.classList.contains("visible"));
+        visibleItems.slice(-maxVisibleItems).forEach((item) => item.classList.remove("visible"));
+
+        if (visibleItems.length <= maxVisibleItems * 2) {
+          document.getElementById("show-less").style.display = "none";
+        }
+        document.getElementById("show-more").style.display = "block";
+      }
+
+      function handleMapButtonClick(event) {
+        const lat = event.target.dataset.lat;
+        const lon = event.target.dataset.lon;
+        if (lat && lon) {
+          document.getElementById("map").style.display = "block";
+          map.setView([lat, lon], 14);
+        }
       }
 
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
       document.getElementById("show-more").addEventListener("click", showMoreItems);
+      document.getElementById("show-less").addEventListener("click", showLessItems);
+      document.getElementById("camping-list").addEventListener("click", (event) => {
+        if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
+      });
+
       loadCampingList();
     </script>
   </body>

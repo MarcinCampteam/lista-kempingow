@@ -38,7 +38,7 @@
         margin: 0 auto;
       }
       #camping-list li {
-        display: none;
+        display: flex;
         flex-direction: column;
         align-items: center;
         border: 2px solid #15830d;
@@ -48,34 +48,6 @@
         font-size: 12px;
         color: #000000;
         background-color: #ffffff;
-      }
-      #camping-list li.visible {
-        display: flex;
-      }
-      .controls {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin: 10px auto;
-      }
-      .controls button {
-        padding: 10px;
-        font-size: 12px;
-        font-weight: bold;
-        color: #ffffff;
-        background-color: #15830d;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .controls button:hover {
-        background-color: #136b0b;
-      }
-      #map {
-        width: 100%;
-        height: 600px;
-        margin-top: 20px;
-        display: none;
       }
       .button-container {
         display: flex;
@@ -109,16 +81,17 @@
       .map-button:hover {
         background-color: #136b0b;
       }
+      #map {
+        width: 100%;
+        height: 600px;
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
     <div class="top-bar"></div>
     <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
     <ul id="camping-list"></ul>
-    <div class="controls">
-      <button id="show-more">Pokaż więcej</button>
-      <button id="show-less" style="display: none;">Pokaż mniej</button>
-    </div>
     <div id="map"></div>
     <div class="bottom-bar"></div>
 
@@ -128,7 +101,6 @@
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup();
       const markers = [];
-      const maxVisibleItems = 3;
 
       // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -157,9 +129,6 @@
               const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
 
               const li = document.createElement("li");
-              li.classList.add("visible");
-              if (i >= maxVisibleItems) li.classList.remove("visible");
-
               li.innerHTML = `
                 <span style="width: 100%; text-align: center; margin-bottom: 10px;">
                     <strong style="font-size: 20px;">${name}</strong>
@@ -203,33 +172,10 @@
         });
       }
 
-      function showMoreItems() {
-        const items = document.querySelectorAll("#camping-list li");
-        let hiddenItems = Array.from(items).filter((item) => !item.classList.contains("visible"));
-        hiddenItems.slice(0, maxVisibleItems).forEach((item) => item.classList.add("visible"));
-
-        if (hiddenItems.length <= maxVisibleItems) {
-          document.getElementById("show-more").style.display = "none";
-        }
-        document.getElementById("show-less").style.display = "block";
-      }
-
-      function showLessItems() {
-        const items = document.querySelectorAll("#camping-list li");
-        const visibleItems = Array.from(items).filter((item) => item.classList.contains("visible"));
-        visibleItems.slice(-maxVisibleItems).forEach((item) => item.classList.remove("visible"));
-
-        if (visibleItems.length <= maxVisibleItems) {
-          document.getElementById("show-less").style.display = "none";
-        }
-        document.getElementById("show-more").style.display = "block";
-      }
-
       function handleMapButtonClick(event) {
         const lat = event.target.dataset.lat;
         const lon = event.target.dataset.lon;
         if (lat && lon) {
-          document.getElementById("map").style.display = "block";
           map.setView([lat, lon], 14);
           markerCluster.eachLayer((layer) => {
             const layerLatLng = layer.getLatLng();
@@ -241,8 +187,6 @@
       }
 
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-more").addEventListener("click", showMoreItems);
-      document.getElementById("show-less").addEventListener("click", showLessItems);
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
       });

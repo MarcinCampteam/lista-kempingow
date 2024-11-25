@@ -6,7 +6,7 @@
     <title>Lista Kempingów z Mapą</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <style>
@@ -73,12 +73,12 @@
         grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
         gap: 10px;
         padding: 10px;
-        max-height: 250px; /* Poprawiono wysokość */
+        max-height: 250px;
         overflow-y: auto;
         background-color: #eaf4ea;
         border: 2px solid #15830d;
         border-radius: 8px;
-        margin-top: 60px; /* Dodano odstęp od wyszukiwarki */
+        margin-top: 60px;
       }
 
       #camping-list li {
@@ -134,18 +134,16 @@
 
       #map {
         flex: 1;
-        margin-top: 120px; /* Odstęp na górze dla wyszukiwarki i wyników */
+        margin-top: 120px;
       }
     </style>
   </head>
   <body>
     <div id="container">
-      <!-- Sekcja wyszukiwarki -->
       <div id="search-section">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
         <button id="show-all-btn">Pokaż wszystkie</button>
       </div>
-      <!-- Mapa -->
       <ul id="camping-list"></ul>
       <div id="map"></div>
     </div>
@@ -157,8 +155,8 @@
       const markerCluster = L.markerClusterGroup();
       const markers = [];
       const maxVisibleItems = 2;
+      let isExpanded = false;
 
-      // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
@@ -172,7 +170,12 @@
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
+            const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
+            const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
+            return nameA.localeCompare(nameB, "pl");
+          });
+
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
@@ -190,8 +193,8 @@
               li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">
-                    <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
-                    <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
+                  <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
+                  <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;
 
@@ -242,7 +245,7 @@
         const lat = event.target.dataset.lat;
         const lon = event.target.dataset.lon;
         if (lat && lon) {
-          map.setView([lat, lon], 14);
+          map.setView([lat, lon], 18); // Maksymalne powiększenie
           markerCluster.eachLayer((layer) => {
             const layerLatLng = layer.getLatLng();
             if (layerLatLng.lat == lat && layerLatLng.lng == lon) {
@@ -252,12 +255,21 @@
         }
       }
 
-      document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-all-btn").addEventListener("click", () => {
+      function toggleShowAll() {
         const listItems = document.querySelectorAll("#camping-list li");
-        listItems.forEach((item) => item.classList.add("visible"));
-      });
+        isExpanded = !isExpanded;
+        listItems.forEach((item, index) => {
+          if (isExpanded || index < maxVisibleItems) {
+            item.classList.add("visible");
+          } else {
+            item.classList.remove("visible");
+          }
+        });
+        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
+      }
 
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
       });

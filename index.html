@@ -14,7 +14,6 @@
         font-family: "Open Sans", sans-serif;
         margin: 0;
         padding: 0;
-        overflow: hidden; /* Ukryj przewijanie całego dokumentu */
       }
 
       .top-bar,
@@ -31,75 +30,56 @@
       }
 
       #search-section {
-        position: fixed; /* Wyszukiwarka zawsze na górze */
+        position: fixed;
         top: 0;
         width: 100%;
         background-color: white;
         z-index: 1000;
         border-bottom: 2px solid #15830d;
-        padding-bottom: 10px;
+        padding: 10px;
       }
 
       #search-bar {
         display: block;
-        margin: 10px auto;
+        margin: 0 auto 10px;
         width: 70%;
-        padding: 12px;
-        font-size: 12px;
+        padding: 10px;
+        font-size: 14px;
         border: 3px solid #15830d;
         border-radius: 8px;
         font-weight: bold;
       }
 
-      #show-all-button {
-        display: block;
-        margin: 10px auto;
-        padding: 10px 20px;
-        font-size: 14px;
-        font-weight: bold;
-        color: white;
-        background-color: #15830d;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-
-      #show-all-button:hover {
-        background-color: #136b0b;
-      }
-
       #camping-list {
-        list-style-type: none;
-        padding: 0;
-        margin: 0 auto;
-        max-width: 600px;
-        max-height: 150px; /* Maksymalna wysokość dla wyników */
-        overflow-y: auto; /* Dodaj przewijanie, jeśli lista wyników jest za długa */
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+        gap: 10px;
+        padding: 10px;
+        max-height: 150px;
+        overflow-y: auto;
+        background-color: #eaf4ea;
+        border: 2px solid #15830d;
+        border-radius: 8px;
       }
 
       #camping-list li {
         display: none;
-        flex-direction: column;
         align-items: center;
         border: 2px solid #15830d;
         border-radius: 8px;
-        margin: 10px 0;
         padding: 10px;
         font-size: 12px;
         color: #000000;
         background-color: #ffffff;
+        text-align: center;
       }
 
       #camping-list li.visible {
         display: flex;
+        flex-direction: column;
       }
 
       .button-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
         margin-top: 10px;
       }
 
@@ -134,7 +114,8 @@
       }
 
       #map {
-        flex: 1; /* Mapa zajmuje resztę miejsca */
+        flex: 1;
+        margin-top: 60px; /* Odstęp na górze dla wyszukiwarki */
       }
     </style>
   </head>
@@ -143,7 +124,6 @@
       <!-- Sekcja wyszukiwarki -->
       <div id="search-section">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-        <button id="show-all-button">Pokaż wszystkie obiekty</button>
         <ul id="camping-list"></ul>
       </div>
       <!-- Mapa -->
@@ -156,7 +136,7 @@
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup();
       const markers = [];
-      const maxVisibleItems = 2; // Wyświetlaj maksymalnie 2 wyniki
+      const maxVisibleItems = 2;
 
       // Dodanie warstwy OpenStreetMap
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -172,13 +152,20 @@
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          const placemarks = kml.getElementsByTagName("Placemark");
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
-          for (let i = 0; i < placemarks.length; i++) {
-            const name = placemarks[i].getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-            const coordinates = placemarks[i].getElementsByTagName("coordinates")[0]?.textContent.trim();
+          // Sortowanie miejsc alfabetycznie
+          placemarks.sort((a, b) => {
+            const nameA = a.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const nameB = b.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            return nameA.localeCompare(nameB, "pl");
+          });
+
+          for (let placemark of placemarks) {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
@@ -187,13 +174,9 @@
               const li = document.createElement("li");
 
               li.innerHTML = `
-                <span style="width: 100%; text-align: center; margin-bottom: 10px;">
-                    <strong style="font-size: 20px;">${name}</strong>
-                </span>
+                <span>${name}</span>
                 <div class="button-container">
                     <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
-                </div>
-                <div class="button-container">
                     <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;
@@ -225,7 +208,6 @@
         );
         const listItems = document.querySelectorAll("#camping-list li");
 
-        // Ukryj wszystkie elementy, jeśli pole wyszukiwania jest puste
         if (!searchTerm) {
           listItems.forEach((item) => item.classList.remove("visible"));
           return;
@@ -262,12 +244,6 @@
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
-      });
-
-      document.getElementById("show-all-button").addEventListener("click", () => {
-        document.querySelectorAll("#camping-list li").forEach((item) => {
-          item.classList.add("visible");
-        });
       });
 
       loadCampingList();

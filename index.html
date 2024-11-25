@@ -180,13 +180,9 @@
           });
         },
       });
-      const markers = [];
-      const maxVisibleItems = 2;
-      let isExpanded = false;
+      map.addLayer(markerCluster);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map);
+      const campingList = document.getElementById("camping-list");
 
       async function loadCampingList() {
         try {
@@ -197,112 +193,46 @@
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          // Pobierz linki z JSON
-          const linksResponse = await fetch("https://raw.githubusercontent.com/MarcinCampteam/map-links/refs/heads/main/links.json");
-          const links = await linksResponse.json();
-
-          const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
-            const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
-            const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
-            return nameA.localeCompare(nameB, "pl");
-          });
-
-          const campingList = document.getElementById("camping-list");
-          campingList.innerHTML = "";
-
-          placemarks.forEach((placemark, index) => {
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+          placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const detailLink = links[name] || null; // Pobierz link z JSON, jeśli istnieje
+              const marker = L.marker([lat, lon]);
+              marker.bindPopup(`<strong>${name}</strong>`);
+              markerCluster.addLayer(marker);
 
               const li = document.createElement("li");
-              if (index < maxVisibleItems) li.classList.add("visible");
-
+              li.classList.add("visible");
               li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">
-                  <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
                   <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
               `;
-
               campingList.appendChild(li);
-
-              const marker = L.marker([lat, lon]);
-
-              // Twórz zawartość popupu
-              let popupContent = `<strong>${name}</strong>`;
-              if (detailLink) {
-                popupContent += `<br><a href="${detailLink}" target="_blank">Szczegóły</a>`;
-              }
-
-              marker.bindPopup(popupContent); // Przypisz popup do markera
-              markerCluster.addLayer(marker);
-              markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
-          map.addLayer(markerCluster);
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }
       }
 
-      function filterCampingList() {
-        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-        const campingList = document.getElementById("camping-list");
-
-        if (!searchTerm) {
-          campingList.classList.remove("visible");
-          return;
-        }
-
-        campingList.classList.add("visible");
-
-        const listItems = Array.from(campingList.querySelectorAll("li"));
-        listItems.forEach((item) => {
-          const text = item.querySelector("span").textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
-            item.classList.add("visible");
-          } else {
-            item.classList.remove("visible");
-          }
-        });
-      }
-
-      function toggleShowAll() {
-        const campingList = document.getElementById("camping-list");
-        isExpanded = !isExpanded;
-
-        if (isExpanded) {
-          campingList.classList.add("visible");
-          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-        } else {
-          campingList.classList.remove("visible");
-          campingList.querySelectorAll("li").forEach((item, index) => {
-            if (index < maxVisibleItems) {
-              item.classList.add("visible");
-            } else {
-              item.classList.remove("visible");
-            }
-          });
-        }
-
-        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
-      }
-
-      document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) {
           const lat = event.target.dataset.lat;
           const lon = event.target.dataset.lon;
           if (lat && lon) {
             map.setView([lat, lon], 18);
+            campingList.classList.remove("visible"); // Ukryj listę po kliknięciu
           }
         }
+      });
+
+      document.getElementById("show-all-btn").addEventListener("click", () => {
+        campingList.classList.toggle("visible");
       });
 
       loadCampingList();

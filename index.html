@@ -64,7 +64,7 @@
         font-weight: bold;
         cursor: pointer;
         white-space: nowrap;
-        margin-right: 40px;
+        margin-right: -40px;
       }
 
       #show-all-btn:hover {
@@ -174,8 +174,8 @@
           if (count > 10) size = "medium";
           if (count > 50) size = "large";
           return L.divIcon({
-            html: <div><span>${count}</span></div>,
-            className: marker-cluster marker-cluster-${size},
+            html: `<div><span>${count}</span></div>`,
+            className: `marker-cluster marker-cluster-${size}`,
             iconSize: L.point(40, 40, true),
           });
         },
@@ -191,7 +191,7 @@
       async function loadCampingList() {
         try {
           const response = await fetch(kmlUrl);
-          if (!response.ok) throw new Error(HTTP error! status: ${response.status});
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
           const kmlText = await response.text();
           const parser = new DOMParser();
@@ -221,22 +221,22 @@
               const li = document.createElement("li");
               if (index < maxVisibleItems) li.classList.add("visible");
 
-              li.innerHTML = 
+              li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">
                   <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
                   <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
-              ;
+              `;
 
               campingList.appendChild(li);
 
               const marker = L.marker([lat, lon]);
 
               // Twórz zawartość popupu
-              let popupContent = <strong>${name}</strong>;
+              let popupContent = `<strong>${name}</strong>`;
               if (detailLink) {
-                popupContent += <br><a href="${detailLink}" target="_blank">Szczegóły</a>;
+                popupContent += `<br><a href="${detailLink}" target="_blank">Szczegóły</a>`;
               }
 
               marker.bindPopup(popupContent); // Przypisz popup do markera

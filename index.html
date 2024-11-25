@@ -43,25 +43,35 @@
         gap: 10px;
       }
 
-      #search-bar {
-        width: 70%;
-        padding: 10px;
-        font-size: 14px;
+      #search-bar-container {
+        display: flex;
+        width: 100%;
+        max-width: 600px;
+        align-items: center;
         border: 3px solid #15830d;
         border-radius: 8px;
+        padding: 5px;
+      }
+
+      #search-bar {
+        flex: 1;
+        padding: 10px;
+        font-size: 14px;
+        border: none;
+        outline: none;
         font-weight: bold;
       }
 
       #show-all-btn {
-        padding: 10px;
-        font-size: 14px;
-        border: 3px solid #15830d;
+        padding: 8px;
+        font-size: 12px;
         background-color: #facc15;
         color: #000000;
-        border-radius: 8px;
+        border: none;
+        border-radius: 5px;
         font-weight: bold;
         cursor: pointer;
-        text-align: center;
+        white-space: nowrap;
       }
 
       #show-all-btn:hover {
@@ -79,6 +89,11 @@
         border: 2px solid #15830d;
         border-radius: 8px;
         margin-top: 60px;
+        display: none; /* Ukryj listę wyników na starcie */
+      }
+
+      #camping-list.visible {
+        display: grid;
       }
 
       #camping-list li {
@@ -99,12 +114,15 @@
       }
 
       .button-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
         margin-top: 10px;
       }
 
       .details-button,
       .map-button {
-        width: 80%;
+        flex: 1;
         padding: 8px;
         text-align: center;
         color: #ffffff;
@@ -141,8 +159,10 @@
   <body>
     <div id="container">
       <div id="search-section">
-        <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-        <button id="show-all-btn">Pokaż wszystkie</button>
+        <div id="search-bar-container">
+          <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+          <button id="show-all-btn">Pokaż wszystkie</button>
+        </div>
       </div>
       <ul id="camping-list"></ul>
       <div id="map"></div>
@@ -153,8 +173,8 @@
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
-        showCoverageOnHover: false, // Wyłącza podświetlanie zasięgu
-        maxClusterRadius: 40, // Optymalna odległość dla rozgrupowania
+        showCoverageOnHover: false,
+        maxClusterRadius: 40,
         iconCreateFunction: function (cluster) {
           const count = cluster.getChildCount();
           let size = "small";
@@ -226,10 +246,6 @@
         }
       }
 
-      function removeAccents(str) {
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      }
-
       function filterCampingList() {
         const searchTerm = removeAccents(
           document.getElementById("search-bar").value.toLowerCase()
@@ -237,10 +253,12 @@
         const listItems = document.querySelectorAll("#camping-list li");
 
         if (!searchTerm) {
+          document.getElementById("camping-list").classList.remove("visible");
           listItems.forEach((item) => item.classList.remove("visible"));
           return;
         }
 
+        document.getElementById("camping-list").classList.add("visible");
         let visibleCount = 0;
 
         listItems.forEach((item) => {
@@ -259,7 +277,7 @@
         const lat = event.target.dataset.lat;
         const lon = event.target.dataset.lon;
         if (lat && lon) {
-          map.setView([lat, lon], 18); // Maksymalne powiększenie
+          map.setView([lat, lon], 18);
           markerCluster.eachLayer((layer) => {
             const layerLatLng = layer.getLatLng();
             if (layerLatLng.lat == lat && layerLatLng.lng == lon) {
@@ -281,6 +299,7 @@
           }
         });
 
+        document.getElementById("camping-list").classList.add("visible");
         document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
       }
 

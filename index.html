@@ -64,7 +64,6 @@
         font-weight: bold;
         cursor: pointer;
         white-space: nowrap;
-        margin-left: -10px; /* Przesunięcie w lewo */
       }
 
       #show-all-btn:hover {
@@ -81,7 +80,7 @@
         background-color: #eaf4ea;
         border: 2px solid #15830d;
         border-radius: 8px;
-        margin-top: 30px; /* Zmniejszono odstęp między listą wyników a mapą */
+        margin-top: 60px;
         display: none; /* Ukryj listę wyników na starcie */
       }
 
@@ -145,7 +144,7 @@
 
       #map {
         flex: 1;
-        margin-top: 90px; /* Dopasowanie do zmniejszonego odstępu */
+        margin-top: 120px;
       }
     </style>
   </head>
@@ -174,8 +173,8 @@
           if (count > 10) size = "medium";
           if (count > 50) size = "large";
           return L.divIcon({
-            html: `<div><span>${count}</span></div>`,
-            className: `marker-cluster marker-cluster-${size}`,
+            html: <div><span>${count}</span></div>,
+            className: marker-cluster marker-cluster-${size},
             iconSize: L.point(40, 40, true),
           });
         },
@@ -191,7 +190,7 @@
       async function loadCampingList() {
         try {
           const response = await fetch(kmlUrl);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok) throw new Error(HTTP error! status: ${response.status});
 
           const kmlText = await response.text();
           const parser = new DOMParser();
@@ -217,18 +216,18 @@
               const li = document.createElement("li");
               if (index < maxVisibleItems) li.classList.add("visible");
 
-              li.innerHTML = `
+              li.innerHTML = 
                 <span>${name}</span>
                 <div class="button-container">
                   <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
                   <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
                 </div>
-              `;
+              ;
 
               campingList.appendChild(li);
 
               const marker = L.marker([lat, lon]);
-              marker.bindPopup(`<strong>${name}</strong>`);
+              marker.bindPopup(<strong>${name}</strong>);
               markerCluster.addLayer(marker);
               markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }

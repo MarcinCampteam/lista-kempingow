@@ -37,17 +37,35 @@
         background-color: white;
         z-index: 1000;
         border-bottom: 2px solid #15830d;
+        padding-bottom: 10px;
       }
 
       #search-bar {
         display: block;
         margin: 10px auto;
-        width: 80%;
+        width: 70%;
         padding: 12px;
         font-size: 12px;
         border: 3px solid #15830d;
         border-radius: 8px;
         font-weight: bold;
+      }
+
+      #show-all-button {
+        display: block;
+        margin: 10px auto;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        background-color: #15830d;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      #show-all-button:hover {
+        background-color: #136b0b;
       }
 
       #camping-list {
@@ -125,6 +143,7 @@
       <!-- Sekcja wyszukiwarki -->
       <div id="search-section">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+        <button id="show-all-button">Pokaż wszystkie obiekty</button>
         <ul id="camping-list"></ul>
       </div>
       <!-- Mapa -->
@@ -243,6 +262,12 @@
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
+      });
+
+      document.getElementById("show-all-button").addEventListener("click", () => {
+        document.querySelectorAll("#camping-list li").forEach((item) => {
+          item.classList.add("visible");
+        });
       });
 
       loadCampingList();

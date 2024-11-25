@@ -105,13 +105,6 @@
         flex-direction: column;
       }
 
-      .button-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 5px;
-        margin-top: 10px;
-      }
-
       .details-button {
         display: inline-block;
         padding: 6px 10px;
@@ -165,21 +158,7 @@
       const linksUrl = "https://raw.githubusercontent.com/MarcinCampteam/map-links/refs/heads/main/links.json";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
-      const markerCluster = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 40,
-        iconCreateFunction: function (cluster) {
-          const count = cluster.getChildCount();
-          let size = "small";
-          if (count > 10) size = "medium";
-          if (count > 50) size = "large";
-          return L.divIcon({
-            html: `<div><span>${count}</span></div>`,
-            className: `marker-cluster marker-cluster-${size}`,
-            iconSize: L.point(40, 40, true),
-          });
-        },
-      });
+      const markerCluster = L.markerClusterGroup();
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
@@ -197,6 +176,7 @@
           const links = await linksResponse.json();
 
           const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+          const markers = [];
 
           placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
@@ -220,10 +200,23 @@
 
               marker.bindPopup(popupContent);
               markerCluster.addLayer(marker);
+              markers.push({ marker, name: name.toLowerCase() });
             }
           });
 
           map.addLayer(markerCluster);
+
+          // Wyszukiwanie
+          const searchBar = document.getElementById("search-bar");
+          searchBar.addEventListener("input", () => {
+            const searchTerm = searchBar.value.toLowerCase().trim();
+            markers.forEach(({ marker, name }) => {
+              if (name.includes(searchTerm)) {
+                marker.openPopup();
+                map.setView(marker.getLatLng(), 14);
+              }
+            });
+          });
         } catch (error) {
           console.error("Błąd podczas wczytywania danych:", error);
         }

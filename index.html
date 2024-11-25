@@ -84,7 +84,6 @@
 
       #camping-list li {
         display: none;
-        flex-direction: column;
         align-items: center;
         border: 2px solid #15830d;
         border-radius: 8px;
@@ -97,6 +96,7 @@
 
       #camping-list li.visible {
         display: flex;
+        flex-direction: column;
       }
 
       .button-container {
@@ -141,29 +141,6 @@
         flex: 1;
         margin-top: 120px;
       }
-
-      /* Media queries for mobile adjustments */
-      @media (max-width: 768px) {
-        #search-bar {
-          width: 65%;
-          font-size: 12px;
-        }
-
-        #show-all-btn {
-          font-size: 12px;
-          padding: 8px;
-        }
-
-        .details-button,
-        .map-button {
-          font-size: 10px;
-          padding: 6px;
-        }
-
-        #camping-list {
-          grid-template-columns: repeat(1, 1fr); /* One item per row on smaller screens */
-        }
-      }
     </style>
   </head>
   <body>
@@ -177,25 +154,21 @@
     </div>
 
     <script>
-      // All JavaScript functionality remains unchanged
-      const kmlUrl = "./map.kml";
+      const kmlUrl = "./map.kml"; // Sprawdź poprawność tej ścieżki
+
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 40,
         iconCreateFunction: function (cluster) {
           const count = cluster.getChildCount();
-          let size = "small";
-          if (count > 10) size = "medium";
-          if (count > 50) size = "large";
           return L.divIcon({
             html: `<div><span>${count}</span></div>`,
-            className: `marker-cluster marker-cluster-${size}`,
+            className: `marker-cluster`,
             iconSize: L.point(40, 40, true),
           });
         },
       });
-
       const markers = [];
       const maxVisibleItems = 2;
       let isExpanded = false;
@@ -205,26 +178,74 @@
       }).addTo(map);
 
       async function loadCampingList() {
-        // Fetch and process KML
+        try {
+          const response = await fetch(kmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
+
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
+            const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
+            const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
+            return nameA.localeCompare(nameB, "pl");
+          });
+
+          const campingList = document.getElementById("camping-list");
+          campingList.innerHTML = "";
+
+          placemarks.forEach((placemark, index) => {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
+
+            if (coordinates) {
+              const [lon, lat] = coordinates.split(",");
+              const addOpinionLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
+
+              const li = document.createElement("li");
+              if (index < maxVisibleItems) li.classList.add("visible");
+
+              li.innerHTML = `
+                <span>${name}</span>
+                <div class="button-container">
+                  <a class="details-button" href="${addOpinionLink}" target="_blank">Dodaj zdjęcia lub opinię</a>
+                  <button class="map-button" data-lat="${lat}" data-lon="${lon}">Pokaż na mapie</button>
+                </div>
+              `;
+
+              campingList.appendChild(li);
+
+              const marker = L.marker([lat, lon]);
+              marker.bindPopup(`<strong>${name}</strong>`);
+              markerCluster.addLayer(marker);
+              markers.push({ marker, name, lat, lon });
+            }
+          });
+          map.addLayer(markerCluster);
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku KML:", error);
+        }
       }
 
-      function toggleShowAll() {
-        const listItems = document.querySelectorAll("#camping-list li");
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
+
+      async function filterCampingList() {
+        const searchTerm = document.getElementById("search-bar").value.trim().toLowerCase();
+        // ...
+      }
+
+      async function toggleShowAll() {
+        const campingList = document.querySelectorAll("#camping-list li");
         isExpanded = !isExpanded;
-
-        listItems.forEach((item, index) => {
-          if (isExpanded || index < maxVisibleItems) {
-            item.classList.add("visible");
-          } else {
-            item.classList.remove("visible");
-          }
+        campingList.forEach((item, index) => {
+          if (isExpanded || index < maxVisibleItems) item.classList.add("visible");
+          else item.classList.remove("visible");
         });
-
         document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
       }
 
-      // Event listeners
-      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
       loadCampingList();
     </script>
   </body>

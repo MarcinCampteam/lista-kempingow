@@ -229,7 +229,7 @@
               const marker = L.marker([lat, lon]);
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
-              markers.push({ marker, name, lat, lon });
+              markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
           map.addLayer(markerCluster);
@@ -239,56 +239,37 @@
       }
 
       function filterCampingList() {
-        const searchTerm = removeAccents(
-          document.getElementById("search-bar").value.toLowerCase()
-        );
-        const listItems = document.querySelectorAll("#camping-list li");
+        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
+        const campingList = document.getElementById("camping-list");
 
         if (!searchTerm) {
-          document.getElementById("camping-list").classList.remove("visible");
-          listItems.forEach((item) => item.classList.remove("visible"));
+          campingList.classList.remove("visible");
           return;
         }
 
-        document.getElementById("camping-list").classList.add("visible");
-        let visibleCount = 0;
+        campingList.classList.add("visible");
 
+        const listItems = Array.from(campingList.querySelectorAll("li"));
         listItems.forEach((item) => {
-          const text = removeAccents(item.textContent.toLowerCase());
-          const matches = text.includes(searchTerm);
-          if (matches && visibleCount < maxVisibleItems) {
+          const text = item.querySelector("span").textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
             item.classList.add("visible");
-            visibleCount++;
           } else {
             item.classList.remove("visible");
           }
         });
       }
 
-      function handleMapButtonClick(event) {
-        const lat = event.target.dataset.lat;
-        const lon = event.target.dataset.lon;
-        if (lat && lon) {
-          map.setView([lat, lon], 18);
-          markerCluster.eachLayer((layer) => {
-            const layerLatLng = layer.getLatLng();
-            if (layerLatLng.lat == lat && layerLatLng.lng == lon) {
-              layer.openPopup();
-            }
-          });
-        }
-      }
-
       function toggleShowAll() {
-        const listItems = document.querySelectorAll("#camping-list li");
+        const campingList = document.getElementById("camping-list");
         isExpanded = !isExpanded;
 
         if (isExpanded) {
-          document.getElementById("camping-list").classList.add("visible");
-          listItems.forEach((item) => item.classList.add("visible"));
+          campingList.classList.add("visible");
+          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
         } else {
-          document.getElementById("camping-list").classList.remove("visible");
-          listItems.forEach((item, index) => {
+          campingList.classList.remove("visible");
+          campingList.querySelectorAll("li").forEach((item, index) => {
             if (index < maxVisibleItems) {
               item.classList.add("visible");
             } else {
@@ -303,7 +284,13 @@
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
       document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
       document.getElementById("camping-list").addEventListener("click", (event) => {
-        if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
+        if (event.target.classList.contains("map-button")) {
+          const lat = event.target.dataset.lat;
+          const lon = event.target.dataset.lon;
+          if (lat && lon) {
+            map.setView([lat, lon], 18);
+          }
+        }
       });
 
       loadCampingList();

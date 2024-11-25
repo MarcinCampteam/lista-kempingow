@@ -70,68 +70,21 @@
         background-color: #e6b814;
       }
 
-      #camping-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
-        gap: 10px;
-        padding: 10px;
-        max-height: 250px;
-        overflow-y: auto;
-        background-color: #eaf4ea;
-        border: 2px solid #15830d;
-        border-radius: 8px;
-        margin-top: 60px;
-        display: none; /* Ukryj listę wyników na starcie */
-      }
-
-      #camping-list.visible {
-        display: grid;
-      }
-
-      #camping-list li {
-        display: none;
-        align-items: center;
-        border: 2px solid #15830d;
-        border-radius: 8px;
-        padding: 10px;
-        font-size: 12px;
-        color: #000000;
-        background-color: #ffffff;
-        text-align: center;
-      }
-
-      #camping-list li.visible {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .details-button {
+      .map-popup-button {
         display: inline-block;
-        padding: 6px 10px;
-        font-size: 12px;
-        background-color: #facc15;
-        color: #000000;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: bold;
-      }
-
-      .details-button:hover {
-        background-color: #e6b814;
-      }
-
-      .route-button {
-        display: inline-block;
+        margin-top: 5px;
         padding: 6px 10px;
         font-size: 12px;
         background-color: #15830d;
-        color: white;
+        color: #ffffff;
         text-decoration: none;
         border-radius: 5px;
         font-weight: bold;
+        text-align: center;
+        cursor: pointer;
       }
 
-      .route-button:hover {
+      .map-popup-button:hover {
         background-color: #136b0b;
       }
 
@@ -149,16 +102,28 @@
           <button id="show-all-btn">Pokaż wszystkie</button>
         </div>
       </div>
-      <ul id="camping-list"></ul>
       <div id="map"></div>
     </div>
 
     <script>
       const kmlUrl = "./map.kml";
-      const linksUrl = "https://raw.githubusercontent.com/MarcinCampteam/map-links/refs/heads/main/links.json";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
-      const markerCluster = L.markerClusterGroup();
+      const markerCluster = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 40,
+        iconCreateFunction: function (cluster) {
+          const count = cluster.getChildCount();
+          let size = "small";
+          if (count > 10) size = "medium";
+          if (count > 50) size = "large";
+          return L.divIcon({
+            html: `<div><span>${count}</span></div>`,
+            className: `marker-cluster marker-cluster-${size}`,
+            iconSize: L.point(40, 40, true),
+          });
+        },
+      });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
@@ -166,17 +131,17 @@
 
       async function loadCampingList() {
         try {
-          const kmlResponse = await fetch(kmlUrl);
-          if (!kmlResponse.ok) throw new Error(`HTTP error! status: ${kmlResponse.status}`);
-          const kmlText = await kmlResponse.text();
+          const response = await fetch(kmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const kmlText = await response.text();
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          const linksResponse = await fetch(linksUrl);
+          const linksResponse = await fetch("https://raw.githubusercontent.com/MarcinCampteam/map-links/refs/heads/main/links.json");
           const links = await linksResponse.json();
 
           const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
-          const markers = [];
 
           placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
@@ -190,35 +155,18 @@
 
               let popupContent = `<strong>${name}</strong>`;
               if (detailLink) {
-                popupContent += `
-                  <div>
-                    <a class="details-button" href="${detailLink}" target="_blank">Szczegóły</a>
-                    <a class="route-button" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank">Wyznacz trasę</a>
-                  </div>
-                `;
+                popupContent += `<br><a href="${detailLink}" class="map-popup-button" target="_blank">Szczegóły</a>`;
               }
+              popupContent += `<br><a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" class="map-popup-button" target="_blank">Prowadź do</a>`;
 
               marker.bindPopup(popupContent);
               markerCluster.addLayer(marker);
-              markers.push({ marker, name: name.toLowerCase() });
             }
           });
 
           map.addLayer(markerCluster);
-
-          // Wyszukiwanie
-          const searchBar = document.getElementById("search-bar");
-          searchBar.addEventListener("input", () => {
-            const searchTerm = searchBar.value.toLowerCase().trim();
-            markers.forEach(({ marker, name }) => {
-              if (name.includes(searchTerm)) {
-                marker.openPopup();
-                map.setView(marker.getLatLng(), 14);
-              }
-            });
-          });
         } catch (error) {
-          console.error("Błąd podczas wczytywania danych:", error);
+          console.error("Błąd podczas wczytywania pliku KML:", error);
         }
       }
 

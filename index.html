@@ -22,9 +22,94 @@
         height: 100vh;
       }
 
-      #map {
+      #search-section {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: white;
+        z-index: 1000;
+        border-bottom: 2px solid #15830d;
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      #search-bar-container {
+        display: flex;
+        width: 90%;
+        max-width: 600px;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 5px;
+        gap: 5px;
+      }
+
+      #search-bar {
         flex: 1;
+        padding: 8px;
+        font-size: 14px;
+        border: none;
+        outline: none;
+        font-weight: bold;
+      }
+
+      #show-all-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        background-color: #facc15;
+        color: #000000;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      #show-all-btn:hover {
+        background-color: #e6b814;
+      }
+
+      #camping-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+        gap: 10px;
+        padding: 10px;
+        max-height: 250px;
+        overflow-y: auto;
+        background-color: #eaf4ea;
+        border: 2px solid #15830d;
+        border-radius: 8px;
         margin-top: 60px;
+        display: none; /* Ukryj listę wyników na starcie */
+      }
+
+      #camping-list.visible {
+        display: grid;
+      }
+
+      #camping-list li {
+        display: none;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        color: #000000;
+        background-color: #ffffff;
+        text-align: center;
+      }
+
+      #camping-list li.visible {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+        margin-top: 10px;
       }
 
       .details-button {
@@ -36,7 +121,6 @@
         text-decoration: none;
         border-radius: 5px;
         font-weight: bold;
-        margin: 5px;
       }
 
       .details-button:hover {
@@ -52,16 +136,27 @@
         text-decoration: none;
         border-radius: 5px;
         font-weight: bold;
-        margin: 5px;
       }
 
       .route-button:hover {
         background-color: #136b0b;
       }
+
+      #map {
+        flex: 1;
+        margin-top: 120px;
+      }
     </style>
   </head>
   <body>
     <div id="container">
+      <div id="search-section">
+        <div id="search-bar-container">
+          <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+          <button id="show-all-btn">Pokaż wszystkie</button>
+        </div>
+      </div>
+      <ul id="camping-list"></ul>
       <div id="map"></div>
     </div>
 

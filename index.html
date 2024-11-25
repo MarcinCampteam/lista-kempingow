@@ -36,12 +36,14 @@
         background-color: white;
         z-index: 1000;
         border-bottom: 2px solid #15830d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 10px;
+        gap: 10px;
       }
 
       #search-bar {
-        display: block;
-        margin: 0 auto 10px;
         width: 70%;
         padding: 10px;
         font-size: 14px;
@@ -50,12 +52,28 @@
         font-weight: bold;
       }
 
+      #show-all-btn {
+        padding: 10px;
+        font-size: 14px;
+        border: 3px solid #15830d;
+        background-color: #facc15;
+        color: #000000;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      #show-all-btn:hover {
+        background-color: #e6b814;
+      }
+
       #camping-list {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
         gap: 10px;
         padding: 10px;
-        max-height: 150px;
+        max-height: 200px;
         overflow-y: auto;
         background-color: #eaf4ea;
         border: 2px solid #15830d;
@@ -124,9 +142,10 @@
       <!-- Sekcja wyszukiwarki -->
       <div id="search-section">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-        <ul id="camping-list"></ul>
+        <button id="show-all-btn">Pokaż wszystkie</button>
       </div>
       <!-- Mapa -->
+      <ul id="camping-list"></ul>
       <div id="map"></div>
     </div>
 
@@ -156,14 +175,7 @@
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
-          // Sortowanie miejsc alfabetycznie
-          placemarks.sort((a, b) => {
-            const nameA = a.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-            const nameB = b.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-            return nameA.localeCompare(nameB, "pl");
-          });
-
-          for (let placemark of placemarks) {
+          placemarks.forEach((placemark, index) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
@@ -172,6 +184,7 @@
               const addOpinionLink = "https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99";
 
               const li = document.createElement("li");
+              if (index < maxVisibleItems) li.classList.add("visible");
 
               li.innerHTML = `
                 <span>${name}</span>
@@ -183,18 +196,15 @@
 
               campingList.appendChild(li);
 
-              // Dodaj marker na mapę
               const marker = L.marker([lat, lon]);
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
               markers.push({ marker, name, lat, lon });
             }
-          }
+          });
           map.addLayer(markerCluster);
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
-          document.getElementById("camping-list").innerText =
-            "Nie udało się wczytać listy kempingów.";
         }
       }
 
@@ -242,6 +252,11 @@
       }
 
       document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", () => {
+        const listItems = document.querySelectorAll("#camping-list li");
+        listItems.forEach((item) => item.classList.add("visible"));
+      });
+
       document.getElementById("camping-list").addEventListener("click", (event) => {
         if (event.target.classList.contains("map-button")) handleMapButtonClick(event);
       });

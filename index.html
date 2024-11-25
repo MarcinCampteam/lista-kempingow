@@ -6,7 +6,7 @@
     <title>Lista Kempingów z Mapą</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <style>
@@ -152,7 +152,21 @@
       const kmlUrl = "./map.kml";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
-      const markerCluster = L.markerClusterGroup();
+      const markerCluster = L.markerClusterGroup({
+        showCoverageOnHover: false, // Wyłącza podświetlanie zasięgu
+        maxClusterRadius: 40, // Optymalna odległość dla rozgrupowania
+        iconCreateFunction: function (cluster) {
+          const count = cluster.getChildCount();
+          let size = "small";
+          if (count > 10) size = "medium";
+          if (count > 50) size = "large";
+          return L.divIcon({
+            html: `<div><span>${count}</span></div>`,
+            className: `marker-cluster marker-cluster-${size}`,
+            iconSize: L.point(40, 40, true),
+          });
+        },
+      });
       const markers = [];
       const maxVisibleItems = 2;
       let isExpanded = false;
@@ -258,6 +272,7 @@
       function toggleShowAll() {
         const listItems = document.querySelectorAll("#camping-list li");
         isExpanded = !isExpanded;
+
         listItems.forEach((item, index) => {
           if (isExpanded || index < maxVisibleItems) {
             item.classList.add("visible");
@@ -265,6 +280,7 @@
             item.classList.remove("visible");
           }
         });
+
         document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
       }
 

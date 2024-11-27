@@ -197,10 +197,6 @@
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          // Pobierz linki z JSON
-          const linksResponse = await fetch("https://raw.githubusercontent.com/MarcinCampteam/map-links/refs/heads/main/links.json");
-          const links = await linksResponse.json();
-
           const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
             const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
             const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
@@ -216,8 +212,6 @@
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const detailLink = links[name] || null; // Pobierz link z JSON, jeśli istnieje
-
               const li = document.createElement("li");
               if (index < maxVisibleItems) li.classList.add("visible");
 
@@ -232,14 +226,7 @@
               campingList.appendChild(li);
 
               const marker = L.marker([lat, lon]);
-
-              // Twórz zawartość popupu
-              let popupContent = `<strong>${name}</strong>`;
-              if (detailLink) {
-                popupContent += `<br><a href="${detailLink}" target="_blank">Szczegóły</a>`;
-              }
-
-              marker.bindPopup(popupContent); // Przypisz popup do markera
+              marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
               markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
@@ -248,6 +235,42 @@
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }
+      }
+
+      document.getElementById("camping-list").addEventListener("click", (event) => {
+        if (event.target.classList.contains("map-button")) {
+          const lat = event.target.dataset.lat;
+          const lon = event.target.dataset.lon;
+          if (lat && lon) {
+            map.setView([lat, lon], 18); // Ustaw widok mapy na wybrane miejsce
+            const campingList = document.getElementById("camping-list");
+            campingList.classList.remove("visible"); // Ukryj listę
+          }
+        }
+      });
+
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
+
+      function toggleShowAll() {
+        const campingList = document.getElementById("camping-list");
+        isExpanded = !isExpanded;
+
+        if (isExpanded) {
+          campingList.classList.add("visible");
+          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
+        } else {
+          campingList.classList.remove("visible");
+          campingList.querySelectorAll("li").forEach((item, index) => {
+            if (index < maxVisibleItems) {
+              item.classList.add("visible");
+            } else {
+              item.classList.remove("visible");
+            }
+          });
+        }
+
+        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
       }
 
       function filterCampingList() {
@@ -271,39 +294,6 @@
           }
         });
       }
-
-      function toggleShowAll() {
-        const campingList = document.getElementById("camping-list");
-        isExpanded = !isExpanded;
-
-        if (isExpanded) {
-          campingList.classList.add("visible");
-          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-        } else {
-          campingList.classList.remove("visible");
-          campingList.querySelectorAll("li").forEach((item, index) => {
-            if (index < maxVisibleItems) {
-              item.classList.add("visible");
-            } else {
-              item.classList.remove("visible");
-            }
-          });
-        }
-
-        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
-      }
-
-      document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
-      document.getElementById("camping-list").addEventListener("click", (event) => {
-        if (event.target.classList.contains("map-button")) {
-          const lat = event.target.dataset.lat;
-          const lon = event.target.dataset.lon;
-          if (lat && lon) {
-            map.setView([lat, lon], 18);
-          }
-        }
-      });
 
       loadCampingList();
     </script>

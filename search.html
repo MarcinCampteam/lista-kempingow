@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wyszukiwarka Kempingów</title>
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #eaf4ea;
+      }
+
+      #search-section {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: white;
+        z-index: 1000;
+        border-bottom: 2px solid #15830d;
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      #search-bar-container {
+        display: flex;
+        width: 90%;
+        max-width: 600px;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 5px;
+        gap: 5px;
+      }
+
+      #search-bar {
+        flex: 1;
+        padding: 8px;
+        font-size: 14px;
+        border: none;
+        outline: none;
+        font-weight: bold;
+      }
+
+      #show-all-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        background-color: #facc15;
+        color: #000000;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      #show-all-btn:hover {
+        background-color: #e6b814;
+      }
+
+      #camping-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+        gap: 10px;
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        margin-top: 60px;
+      }
+
+      #camping-list li {
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        color: #000000;
+        background-color: #ffffff;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="search-section">
+      <div id="search-bar-container">
+        <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+        <button id="show-all-btn">Wszystkie</button>
+      </div>
+    </div>
+    <ul id="camping-list"></ul>
+
+    <script>
+      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+
+      async function loadCampingList() {
+        try {
+          const response = await fetch(kmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
+
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+
+          const campingList = document.getElementById("camping-list");
+          campingList.innerHTML = "";
+
+          placemarks.forEach((placemark) => {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const li = document.createElement("li");
+            li.textContent = name;
+
+            campingList.appendChild(li);
+          });
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku KML:", error);
+        }
+      }
+
+      document.getElementById("show-all-btn").addEventListener("click", loadCampingList);
+
+      loadCampingList();
+    </script>
+  </body>
+</html>

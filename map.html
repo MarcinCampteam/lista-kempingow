@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.js"></script>
     <style>
       body {
         margin: 0;
@@ -25,6 +25,12 @@
     <div id="map"></div>
 
     <script>
+      // Funkcja do odczytania parametrów URL
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
@@ -37,18 +43,8 @@
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      // Ikony dla różnych typów miejsc
-      const redIcon = L.icon({
-        iconUrl: 'https://example.com/red-icon.png', // URL do czerwonej ikony
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-      });
-
-      const blueIcon = L.icon({
-        iconUrl: 'https://example.com/blue-icon.png', // URL do niebieskiej ikony
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-      });
+      // Przechowywanie markerów do wyszukiwania
+      const markers = [];
 
       async function loadMarkers() {
         try {
@@ -65,26 +61,56 @@
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
             const extendedData = placemark.getElementsByTagName("ExtendedData")[0];
-            let isCamping = false;
 
+            let additionalInfo = "";
             if (extendedData) {
               const dataEntries = Array.from(extendedData.getElementsByTagName("Data"));
-              const yesKempingiEntry = dataEntries.find(entry => entry.getAttribute("name") === "Yes_Kempingi");
-              if (yesKempingiEntry) {
-                const value = yesKempingiEntry.getElementsByTagName("value")[0]?.textContent.trim();
-                isCamping = value === "1";
-              }
+              dataEntries.forEach((entry) => {
+                const key = entry.getAttribute("name") || "Nieznane";
+                const value = entry.getElementsByTagName("value")[0]?.textContent || "Brak informacji";
+                additionalInfo += `<strong>${key}:</strong> ${value}<br>`;
+              });
             }
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const marker = L.marker([lat, lon], { icon: isCamping ? redIcon : blueIcon });
-              marker.bindPopup(`<strong>${name}</strong>`);
+              const popupContent = `
+                <strong>${name}</strong><br>
+                ${additionalInfo}
+              `;
+              const marker = L.marker([lat, lon]);
+              marker.bindPopup(popupContent);
               markerCluster.addLayer(marker);
+
+              // Przechowaj marker i jego dane do późniejszego użycia
+              markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
 
           map.addLayer(markerCluster);
+
+          // Sprawdź parametry URL (nazwa lokalizacji)
+          const lat = getQueryParam("lat");
+          const lon = getQueryParam("lon");
+          const locationName = getQueryParam("name");
+
+          if (lat && lon && locationName) {
+            // Znajdź marker pasujący do nazwy lokalizacji i współrzędnych
+            const selectedMarker = markers.find(
+              (m) =>
+                m.name === decodeURIComponent(locationName).toLowerCase() &&
+                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
+                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
+            );
+
+            if (selectedMarker) {
+              // Wycentruj mapę na markerze i otwórz popup
+              map.setView([lat, lon], 15);
+              selectedMarker.marker.openPopup();
+            } else {
+              console.warn("Nie znaleziono pasującego markera.");
+            }
+          }
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }

@@ -13,7 +13,7 @@
       }
 
       #search-section {
-        position: fixed;
+        position: sticky;
         top: 0;
         width: 100%;
         background-color: white;
@@ -68,10 +68,11 @@
         overflow-y: auto;
         border: 2px solid #15830d;
         border-radius: 8px;
-        margin-top: 60px;
+        margin-top: 20px;
       }
 
       #camping-list li {
+        display: none;
         align-items: center;
         border: 2px solid #15830d;
         border-radius: 8px;
@@ -80,6 +81,36 @@
         color: #000000;
         background-color: #ffffff;
         text-align: center;
+      }
+
+      #camping-list li.visible {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      .details-button {
+        flex: 1;
+        padding: 6px;
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        background-color: #facc15;
+      }
+
+      .details-button:hover {
+        background-color: #e6b814;
       }
     </style>
   </head>
@@ -94,6 +125,8 @@
 
     <script>
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+      const maxVisibleItems = 2;
+      let isExpanded = false;
 
       async function loadCampingList() {
         try {
@@ -104,15 +137,26 @@
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
 
-          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
+            const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
+            const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
+            return nameA.localeCompare(nameB, "pl");
+          });
 
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
-          placemarks.forEach((placemark) => {
+          placemarks.forEach((placemark, index) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const li = document.createElement("li");
-            li.textContent = name;
+            if (index < maxVisibleItems) li.classList.add("visible");
+
+            li.innerHTML = `
+              <span>${name}</span>
+              <div class="button-container">
+                <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
+              </div>
+            `;
 
             campingList.appendChild(li);
           });
@@ -121,7 +165,42 @@
         }
       }
 
-      document.getElementById("show-all-btn").addEventListener("click", loadCampingList);
+      function toggleShowAll() {
+        const campingList = document.getElementById("camping-list");
+        isExpanded = !isExpanded;
+
+        if (isExpanded) {
+          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
+        } else {
+          campingList.querySelectorAll("li").forEach((item, index) => {
+            if (index < maxVisibleItems) {
+              item.classList.add("visible");
+            } else {
+              item.classList.remove("visible");
+            }
+          });
+        }
+
+        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
+      }
+
+      function filterCampingList() {
+        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
+        const campingList = document.getElementById("camping-list");
+
+        const listItems = Array.from(campingList.querySelectorAll("li"));
+        listItems.forEach((item) => {
+          const text = item.querySelector("span").textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            item.classList.add("visible");
+          } else {
+            item.classList.remove("visible");
+          }
+        });
+      }
+
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
 
       loadCampingList();
     </script>

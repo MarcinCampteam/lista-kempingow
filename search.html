@@ -158,7 +158,6 @@
           <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
         </div>
         <div class="action-buttons">
-          <button id="show-all-btn">Pokaż wszystkie</button>
           <button id="hide-all-btn">Zwiń listę</button>
         </div>
       </div>
@@ -206,13 +205,18 @@
             }
           });
 
-          attachSearchAndShowAll(); // Po załadowaniu listy, aktywuj obsługę wyszukiwania i przycisków
+          // Automatycznie wyświetl wszystkie obiekty
+          document.querySelectorAll("#camping-list li").forEach((item) => {
+            item.classList.add("visible");
+          });
+
+          attachSearchAndHideAll(); // Po załadowaniu listy, aktywuj obsługę wyszukiwania i przycisku
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }
       }
 
-      function attachSearchAndShowAll() {
+      function attachSearchAndHideAll() {
         const campingList = document.getElementById("camping-list");
         const listItems = Array.from(campingList.querySelectorAll("li"));
 
@@ -226,10 +230,6 @@
               item.classList.remove("visible");
             }
           });
-        });
-
-        document.getElementById("show-all-btn").addEventListener("click", () => {
-          listItems.forEach((item) => item.classList.add("visible"));
         });
 
         document.getElementById("hide-all-btn").addEventListener("click", () => {

@@ -112,6 +112,24 @@
       .details-button:hover {
         background-color: #e6b814;
       }
+
+      .map-button {
+        flex: 1;
+        padding: 6px;
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        background-color: #15830d;
+      }
+
+      .map-button:hover {
+        background-color: #136b0b;
+      }
     </style>
   </head>
   <body>
@@ -148,17 +166,23 @@
 
           placemarks.forEach((placemark, index) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-            const li = document.createElement("li");
-            if (index < maxVisibleItems) li.classList.add("visible");
+            const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
-            li.innerHTML = `
-              <span>${name}</span>
-              <div class="button-container">
-                <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
-              </div>
-            `;
+            if (coordinates) {
+              const [lon, lat] = coordinates.split(",");
+              const li = document.createElement("li");
+              if (index < maxVisibleItems) li.classList.add("visible");
 
-            campingList.appendChild(li);
+              li.innerHTML = `
+                <span>${name}</span>
+                <div class="button-container">
+                  <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
+                  <a class="map-button" href="map.html?lat=${lat}&lon=${lon}" target="_blank">Pokaż na mapie</a>
+                </div>
+              `;
+
+              campingList.appendChild(li);
+            }
           });
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);

@@ -26,7 +26,7 @@
 
       #search-bar-container {
         display: flex;
-        width: 80%; /* Zmniejszona szerokość o 20% */
+        width: 80%; /* Zmniejszona szerokość */
         max-width: 500px;
         align-items: center;
         border: 2px solid #15830d;
@@ -38,15 +38,15 @@
       #search-bar {
         flex: 1;
         padding: 8px;
-        font-size: 16px; /* Większa czcionka dla lepszej czytelności */
+        font-size: 14px;
         border: none;
         outline: none;
         font-weight: bold;
       }
 
       #show-all-btn {
-        padding: 8px 12px; /* Większy przycisk dla mobilnych */
-        font-size: 14px; /* Większa czcionka */
+        padding: 8px 12px;
+        font-size: 14px;
         background-color: #facc15;
         color: #000000;
         border: none;
@@ -61,10 +61,10 @@
 
       #camping-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); /* 100% szerokości dla mobilnych */
+        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
         gap: 10px;
         padding: 10px;
-        max-height: 500px; /* Zwiększona wysokość */
+        max-height: 400px;
         overflow-y: auto;
         border: 2px solid #15830d;
         border-radius: 8px;
@@ -76,8 +76,8 @@
         align-items: center;
         border: 2px solid #15830d;
         border-radius: 8px;
-        padding: 12px; /* Większe odstępy */
-        font-size: 14px; /* Większa czcionka dla wyników */
+        padding: 10px;
+        font-size: 12px;
         color: #000000;
         background-color: #ffffff;
         text-align: center;
@@ -91,19 +91,18 @@
       .button-container {
         display: flex;
         justify-content: space-between;
-        gap: 8px;
+        gap: 5px;
         margin-top: 10px;
       }
 
-      .details-button,
-      .map-button {
+      .details-button {
         flex: 1;
-        padding: 8px; /* Większe przyciski */
+        padding: 6px;
         text-align: center;
         color: #ffffff;
         border: none;
         border-radius: 8px;
-        font-size: 14px; /* Większa czcionka */
+        font-size: 12px;
         font-weight: bold;
         cursor: pointer;
         text-decoration: none;
@@ -115,6 +114,16 @@
       }
 
       .map-button {
+        flex: 1;
+        padding: 6px;
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
         background-color: #15830d;
       }
 
@@ -127,15 +136,13 @@
     <div id="search-section">
       <div id="search-bar-container">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-        <button id="show-all-btn">Wszystkie</button>
+        <button id="show-all-btn">Pokaż wszystkie</button>
       </div>
     </div>
     <ul id="camping-list"></ul>
 
     <script>
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-      const maxVisibleItems = 4; // Zmieniono na 4 wyniki
-      let isExpanded = false;
 
       async function loadCampingList() {
         try {
@@ -155,14 +162,13 @@
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
-          placemarks.forEach((placemark, index) => {
+          placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const li = document.createElement("li");
-              if (index < maxVisibleItems) li.classList.add("visible");
 
               li.innerHTML = `
                 <span>${name}</span>
@@ -175,47 +181,42 @@
               campingList.appendChild(li);
             }
           });
+
+          attachSearchAndShowAll(); // Po załadowaniu listy, aktywuj obsługę wyszukiwania i przycisku
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }
       }
 
-      function toggleShowAll() {
+      function attachSearchAndShowAll() {
         const campingList = document.getElementById("camping-list");
-        isExpanded = !isExpanded;
+        const listItems = Array.from(campingList.querySelectorAll("li"));
 
-        if (isExpanded) {
-          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-        } else {
-          campingList.querySelectorAll("li").forEach((item, index) => {
-            if (index < maxVisibleItems) {
+        // Obsługa wyszukiwania
+        document.getElementById("search-bar").addEventListener("input", () => {
+          const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
+
+          listItems.forEach((item) => {
+            const text = item.querySelector("span").textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
               item.classList.add("visible");
             } else {
               item.classList.remove("visible");
             }
           });
-        }
+        });
 
-        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
-      }
+        // Obsługa przycisku "Pokaż wszystkie"
+        document.getElementById("show-all-btn").addEventListener("click", () => {
+          const isAnyVisible = listItems.some((item) => item.classList.contains("visible"));
 
-      function filterCampingList() {
-        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-        const campingList = document.getElementById("camping-list");
-
-        const listItems = Array.from(campingList.querySelectorAll("li"));
-        listItems.forEach((item) => {
-          const text = item.querySelector("span").textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
-            item.classList.add("visible");
+          if (!isAnyVisible) {
+            listItems.forEach((item) => item.classList.add("visible"));
           } else {
-            item.classList.remove("visible");
+            listItems.forEach((item) => item.classList.remove("visible"));
           }
         });
       }
-
-      document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
 
       loadCampingList();
     </script>

@@ -173,11 +173,12 @@
               const li = document.createElement("li");
               if (index < maxVisibleItems) li.classList.add("visible");
 
+              // Zmodyfikowany HTML dla każdego punktu
               li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">
                   <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
-                  <a class="map-button" href="map.html?lat=${lat}&lon=${lon}" target="_blank">Pokaż na mapie</a>
+                  <a class="map-button" href="map.html?lat=${lat}&lon=${lon}&name=${encodeURIComponent(name)}" target="_blank">Pokaż na mapie</a>
                 </div>
               `;
 

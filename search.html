@@ -10,6 +10,19 @@
       margin: 0;
       padding: 0;
       background-color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #main-container {
+      width: 70%; /* Zmniejszenie szerokości wszystkich elementów */
+      max-width: 500px;
+      background-color: #ffffff;
+      border: 2px solid #15830d;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     #search-section {
@@ -27,8 +40,7 @@
 
     #search-bar-container {
       display: flex;
-      width: 70%; /* Zmniejszona szerokość o 10% */
-      max-width: 500px;
+      width: 100%; /* Dopasowanie do kontenera */
       align-items: center;
       border: 2px solid #15830d;
       border-radius: 8px;
@@ -52,6 +64,7 @@
     }
 
     .action-buttons button {
+      flex: 1; /* Równomierne rozłożenie */
       padding: 8px 12px;
       font-size: 14px;
       background-color: #facc15;
@@ -68,7 +81,7 @@
 
     #camping-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+      grid-template-columns: 1fr; /* Zmniejszenie do jednej kolumny na mniejszych ekranach */
       gap: 10px;
       padding: 10px;
       max-height: 400px;
@@ -140,16 +153,18 @@
   </style>
 </head>
 <body>
-  <div id="search-section">
-    <div id="search-bar-container">
-      <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+  <div id="main-container">
+    <div id="search-section">
+      <div id="search-bar-container">
+        <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+      </div>
+      <div class="action-buttons">
+        <button id="show-all-btn">Pokaż wszystkie</button>
+        <button id="hide-all-btn">Zwiń listę</button>
+      </div>
     </div>
-    <div class="action-buttons">
-      <button id="show-all-btn">Pokaż wszystkie</button>
-      <button id="hide-all-btn">Zwiń listę</button>
-    </div>
+    <ul id="camping-list"></ul>
   </div>
-  <ul id="camping-list"></ul>
 
   <script>
     const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
@@ -202,10 +217,8 @@
       const campingList = document.getElementById("camping-list");
       const listItems = Array.from(campingList.querySelectorAll("li"));
 
-      // Obsługa wyszukiwania
       document.getElementById("search-bar").addEventListener("input", () => {
         const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-
         listItems.forEach((item) => {
           const text = item.querySelector("span").textContent.toLowerCase();
           if (text.includes(searchTerm)) {
@@ -216,12 +229,10 @@
         });
       });
 
-      // Obsługa przycisku "Pokaż wszystkie"
       document.getElementById("show-all-btn").addEventListener("click", () => {
         listItems.forEach((item) => item.classList.add("visible"));
       });
 
-      // Obsługa przycisku "Zwiń listę"
       document.getElementById("hide-all-btn").addEventListener("click", () => {
         listItems.forEach((item) => item.classList.remove("visible"));
       });

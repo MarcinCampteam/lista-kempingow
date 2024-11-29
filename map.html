@@ -29,6 +29,7 @@
       const kempingiUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml";
       const polanamiotoweUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml";
       const kempingiopenUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml";
+      const polanamiotoweopenUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml";
 
       const kempingIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
       const polanamiotoweIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png";
@@ -65,9 +66,17 @@
         popupAnchor: [0, -10],
       });
 
+      const polanamiotoweopenIcon = L.icon({
+        iconUrl: polanamiotoweIconUrl,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      });
+
       const kempingMarkers = new Map();
       const polanamiotoweMarkers = new Map();
       const kempingiopenMarkers = new Map();
+      const polanamiotoweopenMarkers = new Map();
       const allMarkers = [];
 
       async function loadKmlData(url, icon = null, storageMap = null) {
@@ -93,7 +102,8 @@
             } else if (
               !kempingMarkers.has(`${lat},${lon}`) &&
               !polanamiotoweMarkers.has(`${lat},${lon}`) &&
-              !kempingiopenMarkers.has(`${lat},${lon}`)
+              !kempingiopenMarkers.has(`${lat},${lon}`) &&
+              !polanamiotoweopenMarkers.has(`${lat},${lon}`)
             ) {
               markerCluster.addLayer(marker);
               allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
@@ -123,6 +133,9 @@
 
           await loadKmlData(kempingiopenUrl, kempingiopenIcon, kempingiopenMarkers);
           kempingiopenMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
+
+          await loadKmlData(polanamiotoweopenUrl, polanamiotoweopenIcon, polanamiotoweopenMarkers);
+          polanamiotoweopenMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
 
           await loadKmlData(kmlUrl);
 

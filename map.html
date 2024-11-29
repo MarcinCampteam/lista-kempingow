@@ -37,48 +37,60 @@
       }).addTo(map);
 
       const markers = [];
-      const kmlUrls = {
-        standard: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
-        campings: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
-      };
+      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+      const kempingiIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
 
-      // Funkcja do wczytywania KML
-      async function loadKml(url, iconColor) {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Błąd podczas ładowania pliku: ${url}`);
-        const kmlText = await response.text();
-        const parser = new DOMParser();
-        const kml = parser.parseFromString(kmlText, "application/xml");
-        const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+      async function loadMarkers() {
+        try {
+          const response = await fetch(kmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        placemarks.forEach((placemark) => {
-          const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-          const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
 
-          if (coordinates) {
-            const [lon, lat] = coordinates.split(",");
-            const icon = L.icon({
-              iconUrl: iconColor === "red" ? "https://example.com/red-icon.png" : "https://example.com/blue-icon.png",
-              iconSize: [25, 41], // Rozmiar ikony
-              iconAnchor: [12, 41], // Punkt zaczepienia
-            });
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
-            const marker = L.marker([lat, lon], { icon });
-            marker.bindPopup(`<strong>${name}</strong>`);
-            markerCluster.addLayer(marker);
-            markers.push({ marker, name: name.toLowerCase(), lat, lon });
-          }
-        });
+          const kempingiIcon = L.icon({
+            iconUrl: kempingiIconUrl,
+            iconSize: [30, 40], // Rozmiar ikony
+            iconAnchor: [15, 40], // Punkt zaczepienia
+          });
+
+          placemarks.forEach((placemark) => {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
+            const extendedData = placemark.getElementsByTagName("ExtendedData")[0];
+            let isKemping = false;
+
+            if (extendedData) {
+              const dataElements = Array.from(extendedData.getElementsByTagName("Data"));
+              dataElements.forEach((dataElement) => {
+                const nameAttr = dataElement.getAttribute("name");
+                if (nameAttr === "Yes_Kempingi" && dataElement.textContent.trim() === "Yes") {
+                  isKemping = true;
+                }
+              });
+            }
+
+            if (coordinates) {
+              const [lon, lat] = coordinates.split(",");
+              const icon = isKemping ? kempingiIcon : null; // Kempingi: ikona; inne: domyślnie
+
+              const marker = L.marker([lat, lon], { icon });
+              marker.bindPopup(`<strong>${name}</strong>`);
+              markerCluster.addLayer(marker);
+              markers.push({ marker, name: name.toLowerCase(), lat, lon });
+            }
+          });
+
+          map.addLayer(markerCluster);
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku KML:", error);
+        }
       }
 
-      // Wczytaj standardowe miejsca (map.kml)
-      loadKml(kmlUrls.standard, "blue");
-
-      // Wczytaj kempingi (Kempingi.kml)
-      loadKml(kmlUrls.campings, "red");
-
-      // Dodaj klastry na mapę
-      map.addLayer(markerCluster);
+      loadMarkers();
     </script>
   </body>
 </html>

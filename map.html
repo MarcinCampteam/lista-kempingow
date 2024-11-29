@@ -41,14 +41,15 @@
 
       const kempingIcon = L.icon({
         iconUrl: kempingIconUrl,
-        iconSize: [30, 30], // Dopasowanie rozmiaru ikony
+        iconSize: [30, 30], // Ikony w kształcie koła
         iconAnchor: [15, 15],
         popupAnchor: [0, -10],
       });
 
-      const markers = []; // Przechowywanie markerów do wyszukiwania
+      const markers = []; // Przechowywanie wszystkich markerów
+      const kempingMarkers = []; // Przechowywanie markerów z Kempingi.kml
 
-      async function loadKmlData(url, icon = null) {
+      async function loadKmlData(url, icon = null, isKemping = false) {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
@@ -67,7 +68,12 @@
             const marker = L.marker([lat, lon], markerOptions).bindPopup(`<strong>${name}</strong>`);
             markerCluster.addLayer(marker);
 
-            markers.push({ marker, name: name.toLowerCase(), lat, lon });
+            const markerData = { marker, name: name.toLowerCase(), lat, lon };
+
+            markers.push(markerData);
+            if (isKemping) {
+              kempingMarkers.push(markerData); // Dodaj do listy kempingów
+            }
           }
         });
 
@@ -81,11 +87,11 @@
 
       async function loadAllMarkers() {
         try {
-          // Wczytaj główne dane z map.kml
-          await loadKmlData(kmlUrl);
-
           // Wczytaj dane z Kempingi.kml z przypisaniem ikony
-          await loadKmlData(kempingiUrl, kempingIcon);
+          await loadKmlData(kempingiUrl, kempingIcon, true);
+
+          // Wczytaj pozostałe dane z map.kml bez zmiany ikon
+          await loadKmlData(kmlUrl);
 
           // Sprawdź parametry URL
           const lat = getQueryParam("lat");
@@ -94,7 +100,8 @@
 
           if (lat && lon && locationName) {
             // Znajdź marker pasujący do nazwy lokalizacji i współrzędnych
-            const selectedMarker = markers.find(
+            const allMarkers = [...kempingMarkers, ...markers];
+            const selectedMarker = allMarkers.find(
               (m) =>
                 m.name === decodeURIComponent(locationName).toLowerCase() &&
                 parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&

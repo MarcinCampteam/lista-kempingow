@@ -57,32 +57,25 @@
         iconUrl: kempingIconUrl,
         iconSize: [60, 60],
         iconAnchor: [30, 30],
-        popupAnchor: [0, -10],
+        popupAnchor: [0, -30],
       });
 
       const polanamiotoweIcon = L.icon({
         iconUrl: polanamiotoweIconUrl,
         iconSize: [60, 60],
         iconAnchor: [30, 30],
+        popupAnchor: [0, -30],
+      });
+
+      const otherIcon = L.icon({
+        iconUrl: kempingiopenIconUrl, // Default icon
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
         popupAnchor: [0, -10],
       });
 
-      const otherIcons = [
-        { url: kempingiopenUrl, icon: kempingiopenIcon },
-        { url: polanamiotoweopenUrl, icon: polanamiotoweopenIcon },
-        { url: parkingilesneUrl, icon: parkingilesneIcon },
-        { url: kempingi1Url, icon: kempingi1Icon },
-        { url: atrakcjeUrl, icon: atrakcjeIcon },
-        { url: miejscenabiwakUrl, icon: miejscenabiwakIcon },
-      ];
-
-      const kempingMarkers = new Map();
-      const allMarkers = [];
-
-      async function loadKmlData(url, icon = null, nonClustered = false) {
+      async function loadKmlData(url, icon, cluster = true) {
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
         const kmlText = await response.text();
         const parser = new DOMParser();
         const kml = parser.parseFromString(kmlText, "application/xml");
@@ -94,59 +87,29 @@
 
           if (coordinates) {
             const [lon, lat] = coordinates.split(",");
-            const markerOptions = icon ? { icon } : {};
-            const marker = L.marker([lat, lon], markerOptions).bindPopup(`<strong>${name}</strong>`);
+            const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
 
-            if (nonClustered) {
-              marker.addTo(map); // Dodaj marker bezpośrednio do mapy
-            } else {
+            if (cluster) {
               markerCluster.addLayer(marker);
+            } else {
+              marker.addTo(map);
             }
-
-            allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
           }
         });
-
-        if (!nonClustered) {
-          map.addLayer(markerCluster);
-        }
-      }
-
-      function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
       }
 
       async function loadAllMarkers() {
         try {
-          // Wczytanie dużych ikon bez grupowania
-          await loadKmlData(kempingiUrl, kempingIcon, true);
-          await loadKmlData(polanamiotoweUrl, polanamiotoweIcon, true);
+          await loadKmlData(kempingiUrl, kempingIcon, false); // No clustering for Kempingi.kml
+          await loadKmlData(polanamiotoweUrl, polanamiotoweIcon, false); // No clustering for Polanamiotowe.kml
+          await loadKmlData(kempingiopenUrl, otherIcon);
+          await loadKmlData(polanamiotoweopenUrl, otherIcon);
+          await loadKmlData(parkingilesneUrl, otherIcon);
+          await loadKmlData(kempingi1Url, otherIcon);
+          await loadKmlData(atrakcjeUrl, otherIcon);
+          await loadKmlData(miejscenabiwakUrl, otherIcon);
 
-          // Wczytanie pozostałych ikon z grupowaniem
-          for (const { url, icon } of otherIcons) {
-            await loadKmlData(url, icon, false);
-          }
-
-          await loadKmlData(kmlUrl, null, false);
-
-          const lat = getQueryParam("lat");
-          const lon = getQueryParam("lon");
-
-          if (lat && lon) {
-            const targetMarker = allMarkers.find(
-              (m) =>
-                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
-                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
-            );
-
-            if (targetMarker) {
-              map.setView([lat, lon], 15);
-              targetMarker.marker.openPopup();
-            } else {
-              console.warn("Nie znaleziono pasującego markera.");
-            }
-          }
+          map.addLayer(markerCluster);
         } catch (error) {
           console.error("Błąd podczas wczytywania danych KML:", error);
         }

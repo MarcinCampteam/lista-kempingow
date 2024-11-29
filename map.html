@@ -25,8 +25,15 @@
     <div id="map"></div>
 
     <script>
-      const map = L.map("map").setView([52.237049, 21.017532], 6);
+      // Funkcja do odczytania parametrów URL
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
 
+      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+
+      const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 40,
@@ -36,9 +43,8 @@
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
+      // Przechowywanie markerów do wyszukiwania
       const markers = [];
-      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-      const kempingiIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
 
       async function loadMarkers() {
         try {
@@ -51,40 +57,45 @@
 
           const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
-          const kempingiIcon = L.icon({
-            iconUrl: kempingiIconUrl,
-            iconSize: [30, 40], // Rozmiar ikony
-            iconAnchor: [15, 40], // Punkt zaczepienia
-          });
-
           placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
-            const extendedData = placemark.getElementsByTagName("ExtendedData")[0];
-            let isKemping = false;
-
-            if (extendedData) {
-              const dataElements = Array.from(extendedData.getElementsByTagName("Data"));
-              dataElements.forEach((dataElement) => {
-                const nameAttr = dataElement.getAttribute("name");
-                if (nameAttr === "Yes_Kempingi" && dataElement.textContent.trim() === "Yes") {
-                  isKemping = true;
-                }
-              });
-            }
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const icon = isKemping ? kempingiIcon : null; // Kempingi: ikona; inne: domyślnie
-
-              const marker = L.marker([lat, lon], { icon });
+              const marker = L.marker([lat, lon]);
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
+
+              // Przechowaj marker i jego dane do późniejszego użycia
               markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
 
           map.addLayer(markerCluster);
+
+          // Sprawdź parametry URL (nazwa lokalizacji)
+          const lat = getQueryParam("lat");
+          const lon = getQueryParam("lon");
+          const locationName = getQueryParam("name");
+
+          if (lat && lon && locationName) {
+            // Znajdź marker pasujący do nazwy lokalizacji i współrzędnych
+            const selectedMarker = markers.find(
+              (m) =>
+                m.name === decodeURIComponent(locationName).toLowerCase() &&
+                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
+                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
+            );
+
+            if (selectedMarker) {
+              // Wycentruj mapę na markerze i otwórz popup
+              map.setView([lat, lon], 15);
+              selectedMarker.marker.openPopup();
+            } else {
+              console.warn("Nie znaleziono pasującego markera.");
+            }
+          }
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }

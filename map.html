@@ -25,8 +25,9 @@
     <div id="map"></div>
 
     <script>
-      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-      const customIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
+      const mapKmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+      const kempingiKmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml";
+      const kempingiIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
@@ -39,19 +40,45 @@
       }).addTo(map);
 
       // Tworzenie niestandardowej ikony
-      const customIcon = L.icon({
-        iconUrl: customIconUrl,
-        iconSize: [30, 40], // Rozmiar ikony
-        iconAnchor: [15, 40], // Punkt zaczepienia ikony
+      const kempingiIcon = L.icon({
+        iconUrl: kempingiIconUrl,
+        iconSize: [30, 40],
+        iconAnchor: [15, 40],
+      });
+
+      const defaultIcon = L.icon({
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
       });
 
       const markers = [];
+      let kempingiNames = new Set();
+
+      async function loadKempingi() {
+        try {
+          const response = await fetch(kempingiKmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+
+          placemarks.forEach((placemark) => {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            kempingiNames.add(name.toLowerCase());
+          });
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku Kempingi.kml:", error);
+        }
+      }
 
       async function loadMarkers() {
         try {
-          const response = await fetch(kmlUrl);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          await loadKempingi();
 
+          const response = await fetch(mapKmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const kmlText = await response.text();
           const parser = new DOMParser();
           const kml = parser.parseFromString(kmlText, "application/xml");
@@ -64,7 +91,10 @@
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const marker = L.marker([lat, lon], { icon: customIcon });
+              const isKemping = kempingiNames.has(name.toLowerCase());
+              const icon = isKemping ? kempingiIcon : defaultIcon;
+
+              const marker = L.marker([lat, lon], { icon });
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
 

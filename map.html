@@ -25,12 +25,6 @@
     <div id="map"></div>
 
     <script>
-      // Funkcja do odczytania parametrów URL
-      function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-      }
-
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
@@ -71,7 +65,16 @@
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
             const extendedData = placemark.getElementsByTagName("ExtendedData")[0];
-            const isCamping = extendedData?.querySelector("[name='Yes_Kempingi']")?.textContent === "1";
+            let isCamping = false;
+
+            if (extendedData) {
+              const dataEntries = Array.from(extendedData.getElementsByTagName("Data"));
+              const yesKempingiEntry = dataEntries.find(entry => entry.getAttribute("name") === "Yes_Kempingi");
+              if (yesKempingiEntry) {
+                const value = yesKempingiEntry.getElementsByTagName("value")[0]?.textContent.trim();
+                isCamping = value === "1";
+              }
+            }
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");

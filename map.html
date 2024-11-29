@@ -55,7 +55,7 @@
           iconSize: [30, 30],
           iconAnchor: [15, 15],
           popupAnchor: [0, -10],
-          }),
+        }),
         polenamiotoweopen: L.icon({
           iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
           iconSize: [30, 30],
@@ -148,9 +148,30 @@
           ]);
 
           map.addLayer(markerCluster);
+
+          const lat = getQueryParam("lat");
+          const lon = getQueryParam("lon");
+
+          if (lat && lon) {
+            const targetMarker = allMarkers.find(
+              (m) =>
+                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
+                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
+            );
+
+            if (targetMarker) {
+              map.setView([lat, lon], 15);
+              targetMarker.marker.openPopup();
+            }
+          }
         } catch (error) {
           console.error("Błąd podczas inicjalizacji mapy:", error);
         }
+      }
+
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
       }
 
       loadAllMarkers();

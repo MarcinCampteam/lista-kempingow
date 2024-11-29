@@ -53,6 +53,7 @@
       border-radius: 5px;
       font-weight: bold;
       cursor: pointer;
+      margin-left: -50px; /* Przesunięcie o 50px w lewo */
     }
 
     #show-all-btn:hover {
@@ -95,14 +96,15 @@
       margin-top: 10px;
     }
 
-    .details-button {
+    .details-button,
+    .map-button {
       flex: 1;
-      padding: 6px;
+      padding: 4px; /* Zmniejszenie rozmiaru ikon */
       text-align: center;
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 10px; /* Zmniejszenie czcionki */
       font-weight: bold;
       cursor: pointer;
       text-decoration: none;
@@ -114,21 +116,33 @@
     }
 
     .map-button {
-      flex: 1;
-      padding: 6px;
-      text-align: center;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
       background-color: #15830d;
     }
 
     .map-button:hover {
       background-color: #136b0b;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pagination-buttons button {
+      padding: 6px 12px;
+      font-size: 12px;
+      background-color: #facc15;
+      color: #000000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .pagination-buttons button:hover {
+      background-color: #e6b814;
     }
   </style>
 </head>
@@ -136,16 +150,20 @@
   <div id="search-section">
     <div id="search-bar-container">
       <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-      <button id="show-all-btn">Wszystkie</button>
+      <button id="show-all-btn">Pokaż wszystkie</button>
     </div>
   </div>
   <ul id="camping-list"></ul>
+  <div class="pagination-buttons">
+    <button id="show-more-btn" style="display: none;">Pokaż więcej</button>
+    <button id="show-less-btn" style="display: none;">Pokaż mniej</button>
+  </div>
 
   <script>
     const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-    const iframe = parent.document.querySelector("iframe#mapIframe"); // ID iframe mapy
-    const maxVisibleItems = 2;
-    let isExpanded = false;
+    const itemsPerPage = 8; // Liczba wyników na stronę
+    let currentPage = 0;
+    let visibleItems = [];
 
     async function loadCampingList() {
       try {
@@ -165,52 +183,56 @@
         const campingList = document.getElementById("camping-list");
         campingList.innerHTML = "";
 
-        placemarks.forEach((placemark, index) => {
+        placemarks.forEach((placemark) => {
           const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
           const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
           if (coordinates) {
             const [lon, lat] = coordinates.split(",");
             const li = document.createElement("li");
-            if (index < maxVisibleItems) li.classList.add("visible");
-
             li.innerHTML = `
               <span>${name}</span>
               <div class="button-container">
                 <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
-                <button class="map-button" data-lat="${lat}" data-lon="${lon}" data-name="${name}">Pokaż na mapie</button>
+                <a class="map-button" href="map.html?lat=${lat}&lon=${lon}&name=${encodeURIComponent(name)}" target="_blank">Pokaż na mapie</a>
               </div>
             `;
-
             campingList.appendChild(li);
+            visibleItems.push(li);
           }
         });
 
-        // Dodaj obsługę zdarzenia kliknięcia na przycisk „Pokaż na mapie”
-        campingList.addEventListener("click", (event) => {
-          if (event.target.classList.contains("map-button")) {
-            const lat = event.target.getAttribute("data-lat");
-            const lon = event.target.getAttribute("data-lon");
-            const name = event.target.getAttribute("data-name");
-
-            // Wyślij dane do iframe mapy
-            iframe.contentWindow.postMessage({ lat, lon, name }, "*");
-          }
-        });
+        showNextPage(); // Pokaż pierwszą stronę
       } catch (error) {
         console.error("Błąd podczas wczytywania pliku KML:", error);
       }
     }
 
-    function toggleShowAll() {
-      const campingList = document.getElementById("camping-list");
-      isExpanded = !isExpanded;
+    function showNextPage() {
+      const start = currentPage * itemsPerPage;
+      const end = start + itemsPerPage;
 
-      if (isExpanded) {
-        campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-      } else {
-        campingList.querySelectorAll("li").forEach((item, index) => {
-          if (index < maxVisibleItems) {
+      visibleItems.forEach((item, index) => {
+        if (index >= start && index < end) {
+          item.classList.add("visible");
+        } else {
+          item.classList.remove("visible");
+        }
+      });
+
+      currentPage++;
+
+      togglePaginationButtons();
+    }
+
+    function showPreviousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+
+        visibleItems.forEach((item, index) => {
+          if (index >= start && index < end) {
             item.classList.add("visible");
           } else {
             item.classList.remove("visible");
@@ -218,26 +240,18 @@
         });
       }
 
-      document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
+      togglePaginationButtons();
     }
 
-    function filterCampingList() {
-      const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-      const campingList = document.getElementById("camping-list");
-
-      const listItems = Array.from(campingList.querySelectorAll("li"));
-      listItems.forEach((item) => {
-        const text = item.querySelector("span").textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-          item.classList.add("visible");
-        } else {
-          item.classList.remove("visible");
-        }
-      });
+    function togglePaginationButtons() {
+      document.getElementById("show-more-btn").style.display =
+        currentPage * itemsPerPage < visibleItems.length ? "inline-block" : "none";
+      document.getElementById("show-less-btn").style.display =
+        currentPage > 1 ? "inline-block" : "none";
     }
 
-    document.getElementById("search-bar").addEventListener("input", filterCampingList);
-    document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
+    document.getElementById("show-more-btn").addEventListener("click", showNextPage);
+    document.getElementById("show-less-btn").addEventListener("click", showPreviousPage);
 
     loadCampingList();
   </script>

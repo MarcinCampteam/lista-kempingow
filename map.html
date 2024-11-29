@@ -43,6 +43,9 @@
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
+      // Przechowywanie markerów do wyszukiwania
+      const markers = [];
+
       async function loadMarkers() {
         try {
           const response = await fetch(kmlUrl);
@@ -63,17 +66,33 @@
               const marker = L.marker([lat, lon]);
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
+
+              // Przechowaj marker i jego nazwę do późniejszego użycia
+              markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
 
           map.addLayer(markerCluster);
 
-          // Sprawdzenie, czy w URL są parametry `lat` i `lon`
+          // Sprawdź parametry URL (nazwa lokalizacji)
           const lat = getQueryParam("lat");
           const lon = getQueryParam("lon");
-          if (lat && lon) {
-            map.setView([lat, lon], 15); // Ustawienie widoku mapy na wybrane współrzędne
-            L.marker([lat, lon]).addTo(map).bindPopup("Wybrana lokalizacja").openPopup();
+          const locationName = getQueryParam("name");
+
+          if (lat && lon && locationName) {
+            // Znajdź marker pasujący do nazwy lokalizacji i współrzędnych
+            const selectedMarker = markers.find(
+              (m) =>
+                m.name === locationName.toLowerCase() &&
+                m.lat === lat &&
+                m.lon === lon
+            );
+
+            if (selectedMarker) {
+              // Wycentruj mapę na markerze i otwórz popup
+              map.setView([lat, lon], 15);
+              selectedMarker.marker.openPopup();
+            }
           }
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);

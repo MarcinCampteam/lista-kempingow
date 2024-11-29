@@ -56,70 +56,30 @@
       const kempingIcon = L.icon({
         iconUrl: kempingIconUrl,
         iconSize: [60, 60],
-        iconAnchor: [15, 15],
+        iconAnchor: [30, 30],
         popupAnchor: [0, -10],
       });
 
       const polanamiotoweIcon = L.icon({
         iconUrl: polanamiotoweIconUrl,
         iconSize: [60, 60],
-        iconAnchor: [15, 15],
+        iconAnchor: [30, 30],
         popupAnchor: [0, -10],
       });
 
-      const kempingiopenIcon = L.icon({
-        iconUrl: kempingiopenIconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
-
-      const polanamiotoweopenIcon = L.icon({
-        iconUrl: polanamiotoweIconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
-
-      const parkingilesneIcon = L.icon({
-        iconUrl: parkingilesneIconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
-
-      const kempingi1Icon = L.icon({
-        iconUrl: kempingi1IconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
-
-      const atrakcjeIcon = L.icon({
-        iconUrl: atrakcjeIconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
-
-      const miejscenabiwakIcon = L.icon({
-        iconUrl: miejscenabiwakIconUrl,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -10],
-      });
+      const otherIcons = [
+        { url: kempingiopenUrl, icon: kempingiopenIcon },
+        { url: polanamiotoweopenUrl, icon: polanamiotoweopenIcon },
+        { url: parkingilesneUrl, icon: parkingilesneIcon },
+        { url: kempingi1Url, icon: kempingi1Icon },
+        { url: atrakcjeUrl, icon: atrakcjeIcon },
+        { url: miejscenabiwakUrl, icon: miejscenabiwakIcon },
+      ];
 
       const kempingMarkers = new Map();
-      const polanamiotoweMarkers = new Map();
-      const kempingiopenMarkers = new Map();
-      const polanamiotoweopenMarkers = new Map();
-      const parkingilesneMarkers = new Map();
-      const kempingi1Markers = new Map();
-      const atrakcjeMarkers = new Map();
-      const miejscenabiwakMarkers = new Map();
       const allMarkers = [];
 
-      async function loadKmlData(url, icon = null, storageMap = null) {
+      async function loadKmlData(url, icon = null, nonClustered = false) {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
@@ -137,27 +97,17 @@
             const markerOptions = icon ? { icon } : {};
             const marker = L.marker([lat, lon], markerOptions).bindPopup(`<strong>${name}</strong>`);
 
-            if (storageMap) {
-              storageMap.set(`${lat},${lon}`, { marker, name });
-            } else if (
-              !kempingMarkers.has(`${lat},${lon}`) &&
-              !polanamiotoweMarkers.has(`${lat},${lon}`) &&
-              !kempingiopenMarkers.has(`${lat},${lon}`) &&
-              !polanamiotoweopenMarkers.has(`${lat},${lon}`) &&
-              !parkingilesneMarkers.has(`${lat},${lon}`) &&
-              !kempingi1Markers.has(`${lat},${lon}`) &&
-              !atrakcjeMarkers.has(`${lat},${lon}`) &&
-              !miejscenabiwakMarkers.has(`${lat},${lon}`)
-            ) {
+            if (nonClustered) {
+              marker.addTo(map); // Dodaj marker bezpośrednio do mapy
+            } else {
               markerCluster.addLayer(marker);
-              allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
 
             allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
           }
         });
 
-        if (!storageMap) {
+        if (!nonClustered) {
           map.addLayer(markerCluster);
         }
       }
@@ -169,31 +119,16 @@
 
       async function loadAllMarkers() {
         try {
-          await loadKmlData(kempingiUrl, kempingIcon, kempingMarkers);
-          kempingMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
+          // Wczytanie dużych ikon bez grupowania
+          await loadKmlData(kempingiUrl, kempingIcon, true);
+          await loadKmlData(polanamiotoweUrl, polanamiotoweIcon, true);
 
-          await loadKmlData(polanamiotoweUrl, polanamiotoweIcon, polanamiotoweMarkers);
-          polanamiotoweMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
+          // Wczytanie pozostałych ikon z grupowaniem
+          for (const { url, icon } of otherIcons) {
+            await loadKmlData(url, icon, false);
+          }
 
-          await loadKmlData(kempingiopenUrl, kempingiopenIcon, kempingiopenMarkers);
-          kempingiopenMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(polanamiotoweopenUrl, polanamiotoweopenIcon, polanamiotoweopenMarkers);
-          polanamiotoweopenMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(parkingilesneUrl, parkingilesneIcon, parkingilesneMarkers);
-          parkingilesneMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(kempingi1Url, kempingi1Icon, kempingi1Markers);
-          kempingi1Markers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(atrakcjeUrl, atrakcjeIcon, atrakcjeMarkers);
-          atrakcjeMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(miejscenabiwakUrl, miejscenabiwakIcon, miejscenabiwakMarkers);
-          miejscenabiwakMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
-
-          await loadKmlData(kmlUrl);
+          await loadKmlData(kmlUrl, null, false);
 
           const lat = getQueryParam("lat");
           const lon = getQueryParam("lon");

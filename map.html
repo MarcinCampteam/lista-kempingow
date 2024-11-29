@@ -67,7 +67,7 @@
               marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
 
-              // Przechowaj marker i jego nazwę do późniejszego użycia
+              // Przechowaj marker i jego dane do późniejszego użycia
               markers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           });
@@ -83,15 +83,17 @@
             // Znajdź marker pasujący do nazwy lokalizacji i współrzędnych
             const selectedMarker = markers.find(
               (m) =>
-                m.name === locationName.toLowerCase() &&
-                m.lat === lat &&
-                m.lon === lon
+                m.name === decodeURIComponent(locationName).toLowerCase() &&
+                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
+                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
             );
 
             if (selectedMarker) {
               // Wycentruj mapę na markerze i otwórz popup
               map.setView([lat, lon], 15);
               selectedMarker.marker.openPopup();
+            } else {
+              console.warn("Nie znaleziono pasującego markera.");
             }
           }
         } catch (error) {

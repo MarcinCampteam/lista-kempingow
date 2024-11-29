@@ -1,216 +1,222 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wyszukiwarka Kempingów</title>
-  <style>
-    body {
-      font-family: "Open Sans", sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #eaf4ea;
-    }
-
-    #search-section {
-      position: sticky;
-      top: 0;
-      width: 100%;
-      background-color: white;
-      z-index: 1000;
-      border-bottom: 2px solid #15830d;
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-    }
-
-    #search-bar-container {
-      display: flex;
-      width: 90%;
-      max-width: 600px;
-      align-items: center;
-      border: 2px solid #15830d;
-      border-radius: 8px;
-      padding: 5px;
-      gap: 5px;
-    }
-
-    #search-bar {
-      flex: 1;
-      padding: 8px;
-      font-size: 14px;
-      border: none;
-      outline: none;
-      font-weight: bold;
-    }
-
-    #show-all-btn {
-      padding: 6px 10px;
-      font-size: 12px;
-      background-color: #facc15;
-      color: #000000;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #show-all-btn:hover {
-      background-color: #e6b814;
-    }
-
-    #camping-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
-      gap: 10px;
-      padding: 10px;
-      max-height: 400px;
-      overflow-y: auto;
-      border: 2px solid #15830d;
-      border-radius: 8px;
-      margin-top: 20px;
-    }
-
-    #camping-list li {
-      display: none;
-      align-items: center;
-      border: 2px solid #15830d;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 12px;
-      color: #000000;
-      background-color: #ffffff;
-      text-align: center;
-    }
-
-    #camping-list li.visible {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .button-container {
-      display: flex;
-      justify-content: space-between;
-      gap: 5px;
-      margin-top: 10px;
-    }
-
-    .details-button {
-      flex: 1;
-      padding: 6px;
-      text-align: center;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      background-color: #facc15;
-    }
-
-    .details-button:hover {
-      background-color: #e6b814;
-    }
-
-    .map-button {
-      flex: 1;
-      padding: 6px;
-      text-align: center;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      background-color: #15830d;
-    }
-
-    .map-button:hover {
-      background-color: #136b0b;
-    }
-  </style>
-</head>
-<body>
-  <div id="search-section">
-    <div id="search-bar-container">
-      <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-      <button id="show-all-btn">Wszystkie</button>
-    </div>
-  </div>
-  <ul id="camping-list"></ul>
-
-  <script>
-    const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-    const iframe = parent.document.querySelector("iframe#mapIframe"); // ID iframe mapy
-    const maxVisibleItems = 2;
-    let isExpanded = false;
-
-    async function loadCampingList() {
-      try {
-        const response = await fetch(kmlUrl);
-        if (!response.ok) throw new Error(HTTP error! status: ${response.status});
-
-        const kmlText = await response.text();
-        const parser = new DOMParser();
-        const kml = parser.parseFromString(kmlText, "application/xml");
-
-        const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
-          const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
-          const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
-          return nameA.localeCompare(nameB, "pl");
-        });
-
-        const campingList = document.getElementById("camping-list");
-        campingList.innerHTML = "";
-
-        placemarks.forEach((placemark, index) => {
-          const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-          const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
-
-          if (coordinates) {
-            const [lon, lat] = coordinates.split(",");
-            const li = document.createElement("li");
-            if (index < maxVisibleItems) li.classList.add("visible");
-
-            li.innerHTML = 
-              <span>${name}</span>
-              <div class="button-container">
-                <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
-                <button class="map-button" data-lat="${lat}" data-lon="${lon}" data-name="${name}">Pokaż na mapie</button>
-              </div>
-            ;
-
-            campingList.appendChild(li);
-          }
-        });
-
-        // Dodaj obsługę zdarzenia kliknięcia na przycisk „Pokaż na mapie”
-        campingList.addEventListener("click", (event) => {
-          if (event.target.classList.contains("map-button")) {
-            const lat = event.target.getAttribute("data-lat");
-            const lon = event.target.getAttribute("data-lon");
-            const name = event.target.getAttribute("data-name");
-
-            // Wyślij dane do iframe mapy
-            iframe.contentWindow.postMessage({ lat, lon, name }, "*");
-          }
-        });
-      } catch (error) {
-        console.error("Błąd podczas wczytywania pliku KML:", error);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wyszukiwarka Kempingów</title>
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #eaf4ea;
       }
-    }
 
-    function toggleShowAll() {
-      const campingList = document.getElementById("camping-list");
-      isExpanded = !isExpanded;
+      #search-section {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        background-color: white;
+        z-index: 1000;
+        border-bottom: 2px solid #15830d;
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+      }
 
-      if (isExpanded) {
-        campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-      } else {
-        campingList.querySelectorAll("li").forEach((item, index) => {
-          if (index < maxVisibleItems) {
+      #search-bar-container {
+        display: flex;
+        width: 90%;
+        max-width: 600px;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 5px;
+        gap: 5px;
+      }
+
+      #search-bar {
+        flex: 1;
+        padding: 8px;
+        font-size: 14px;
+        border: none;
+        outline: none;
+        font-weight: bold;
+      }
+
+      #show-all-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        background-color: #facc15;
+        color: #000000;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      #show-all-btn:hover {
+        background-color: #e6b814;
+      }
+
+      #camping-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+        gap: 10px;
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      #camping-list li {
+        display: none;
+        align-items: center;
+        border: 2px solid #15830d;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        color: #000000;
+        background-color: #ffffff;
+        text-align: center;
+      }
+
+      #camping-list li.visible {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      .details-button {
+        flex: 1;
+        padding: 6px;
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        background-color: #facc15;
+      }
+
+      .details-button:hover {
+        background-color: #e6b814;
+      }
+
+      .map-button {
+        flex: 1;
+        padding: 6px;
+        text-align: center;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        background-color: #15830d;
+      }
+
+      .map-button:hover {
+        background-color: #136b0b;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="search-section">
+      <div id="search-bar-container">
+        <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+        <button id="show-all-btn">Wszystkie</button>
+      </div>
+    </div>
+    <ul id="camping-list"></ul>
+
+    <script>
+      const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
+      const maxVisibleItems = 2;
+      let isExpanded = false;
+
+      async function loadCampingList() {
+        try {
+          const response = await fetch(kmlUrl);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const kmlText = await response.text();
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, "application/xml");
+
+          const placemarks = Array.from(kml.getElementsByTagName("Placemark")).sort((a, b) => {
+            const nameA = a.getElementsByTagName("name")[0]?.textContent || "";
+            const nameB = b.getElementsByTagName("name")[0]?.textContent || "";
+            return nameA.localeCompare(nameB, "pl");
+          });
+
+          const campingList = document.getElementById("camping-list");
+          campingList.innerHTML = "";
+
+          placemarks.forEach((placemark, index) => {
+            const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+            const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
+
+            if (coordinates) {
+              const [lon, lat] = coordinates.split(",");
+              const li = document.createElement("li");
+              if (index < maxVisibleItems) li.classList.add("visible");
+
+              // Zmodyfikowany HTML dla każdego punktu
+              li.innerHTML = `
+                <span>${name}</span>
+                <div class="button-container">
+                  <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
+                  <a class="map-button" href="map.html?lat=${lat}&lon=${lon}&name=${encodeURIComponent(name)}" target="_blank">Pokaż na mapie</a>
+                </div>
+              `;
+
+              campingList.appendChild(li);
+            }
+          });
+        } catch (error) {
+          console.error("Błąd podczas wczytywania pliku KML:", error);
+        }
+      }
+
+      function toggleShowAll() {
+        const campingList = document.getElementById("camping-list");
+        isExpanded = !isExpanded;
+
+        if (isExpanded) {
+          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
+        } else {
+          campingList.querySelectorAll("li").forEach((item, index) => {
+            if (index < maxVisibleItems) {
+              item.classList.add("visible");
+            } else {
+              item.classList.remove("visible");
+            }
+          });
+        }
+
+        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
+      }
+
+      function filterCampingList() {
+        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
+        const campingList = document.getElementById("camping-list");
+
+        const listItems = Array.from(campingList.querySelectorAll("li"));
+        listItems.forEach((item) => {
+          const text = item.querySelector("span").textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
             item.classList.add("visible");
           } else {
             item.classList.remove("visible");
@@ -218,28 +224,10 @@
         });
       }
 
-      document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
-    }
+      document.getElementById("search-bar").addEventListener("input", filterCampingList);
+      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
 
-    function filterCampingList() {
-      const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-      const campingList = document.getElementById("camping-list");
-
-      const listItems = Array.from(campingList.querySelectorAll("li"));
-      listItems.forEach((item) => {
-        const text = item.querySelector("span").textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-          item.classList.add("visible");
-        } else {
-          item.classList.remove("visible");
-        }
-      });
-    }
-
-    document.getElementById("search-bar").addEventListener("input", filterCampingList);
-    document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
-
-    loadCampingList();
-  </script>
-</body>
+      loadCampingList();
+    </script>
+  </body>
 </html>

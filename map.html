@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <style>
       body {
         margin: 0;
@@ -60,26 +60,11 @@
           placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
-            const extendedData = placemark.getElementsByTagName("ExtendedData")[0];
-
-            let additionalInfo = "";
-            if (extendedData) {
-              const dataEntries = Array.from(extendedData.getElementsByTagName("Data"));
-              dataEntries.forEach((entry) => {
-                const key = entry.getAttribute("name") || "Nieznane";
-                const value = entry.getElementsByTagName("value")[0]?.textContent || "Brak informacji";
-                additionalInfo += `<strong>${key}:</strong> ${value}<br>`;
-              });
-            }
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
-              const popupContent = `
-                <strong>${name}</strong><br>
-                ${additionalInfo}
-              `;
               const marker = L.marker([lat, lon]);
-              marker.bindPopup(popupContent);
+              marker.bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
 
               // Przechowaj marker i jego dane do późniejszego użycia

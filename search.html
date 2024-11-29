@@ -150,7 +150,7 @@
     async function loadCampingList() {
       try {
         const response = await fetch(kmlUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(HTTP error! status: ${response.status});
 
         const kmlText = await response.text();
         const parser = new DOMParser();
@@ -174,13 +174,13 @@
             const li = document.createElement("li");
             if (index < maxVisibleItems) li.classList.add("visible");
 
-            li.innerHTML = `
+            li.innerHTML = 
               <span>${name}</span>
               <div class="button-container">
                 <a class="details-button" href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" target="_blank">Dodaj zdjęcia lub opinię</a>
                 <button class="map-button" data-lat="${lat}" data-lon="${lon}" data-name="${name}">Pokaż na mapie</button>
               </div>
-            `;
+            ;
 
             campingList.appendChild(li);
           }

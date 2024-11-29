@@ -32,12 +32,14 @@
       const polanamiotoweopenUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml";
       const parkingilesneUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml";
       const kempingi1Url = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml";
+      const atrakcjeUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml";
 
       const kempingIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
       const polanamiotoweIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png";
       const kempingiopenIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png";
       const parkingilesneIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Parking_Le%C5%9Bny.png";
       const kempingi1IconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png";
+      const atrakcjeIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Atrakcje.png";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
@@ -91,12 +93,20 @@
         popupAnchor: [0, -10],
       });
 
+      const atrakcjeIcon = L.icon({
+        iconUrl: atrakcjeIconUrl,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      });
+
       const kempingMarkers = new Map();
       const polanamiotoweMarkers = new Map();
       const kempingiopenMarkers = new Map();
       const polanamiotoweopenMarkers = new Map();
       const parkingilesneMarkers = new Map();
       const kempingi1Markers = new Map();
+      const atrakcjeMarkers = new Map();
       const allMarkers = [];
 
       async function loadKmlData(url, icon = null, storageMap = null) {
@@ -125,7 +135,8 @@
               !kempingiopenMarkers.has(`${lat},${lon}`) &&
               !polanamiotoweopenMarkers.has(`${lat},${lon}`) &&
               !parkingilesneMarkers.has(`${lat},${lon}`) &&
-              !kempingi1Markers.has(`${lat},${lon}`)
+              !kempingi1Markers.has(`${lat},${lon}`) &&
+              !atrakcjeMarkers.has(`${lat},${lon}`)
             ) {
               markerCluster.addLayer(marker);
               allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
@@ -164,6 +175,9 @@
 
           await loadKmlData(kempingi1Url, kempingi1Icon, kempingi1Markers);
           kempingi1Markers.forEach(({ marker }) => markerCluster.addLayer(marker));
+
+          await loadKmlData(atrakcjeUrl, atrakcjeIcon, atrakcjeMarkers);
+          atrakcjeMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
 
           await loadKmlData(kmlUrl);
 

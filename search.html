@@ -44,7 +44,9 @@
         font-weight: bold;
       }
 
-      #show-all-btn {
+      #show-all-btn,
+      #show-more-btn,
+      #collapse-btn {
         padding: 6px 10px;
         font-size: 12px;
         background-color: #facc15;
@@ -53,9 +55,15 @@
         border-radius: 5px;
         font-weight: bold;
         cursor: pointer;
+        white-space: nowrap;
+        margin: 10px auto;
+        display: block;
+        text-align: center;
       }
 
-      #show-all-btn:hover {
+      #show-all-btn:hover,
+      #show-more-btn:hover,
+      #collapse-btn:hover {
         background-color: #e6b814;
       }
 
@@ -95,14 +103,15 @@
         margin-top: 10px;
       }
 
-      .details-button {
+      .details-button,
+      .map-button {
         flex: 1;
-        padding: 6px;
+        padding: 5px;
         text-align: center;
         color: #ffffff;
         border: none;
         border-radius: 8px;
-        font-size: 12px;
+        font-size: 10px;
         font-weight: bold;
         cursor: pointer;
         text-decoration: none;
@@ -114,21 +123,22 @@
       }
 
       .map-button {
-        flex: 1;
-        padding: 6px;
-        text-align: center;
-        color: #ffffff;
-        border: none;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: none;
         background-color: #15830d;
       }
 
       .map-button:hover {
         background-color: #136b0b;
+      }
+
+      @media (max-width: 768px) {
+        #search-bar {
+          font-size: 12px;
+        }
+
+        .details-button,
+        .map-button {
+          font-size: 9px;
+        }
       }
     </style>
   </head>
@@ -136,15 +146,17 @@
     <div id="search-section">
       <div id="search-bar-container">
         <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
-        <button id="show-all-btn">Wszystkie</button>
+        <button id="show-all-btn">Zwiń</button>
       </div>
     </div>
     <ul id="camping-list"></ul>
+    <button id="show-more-btn" style="display: none;">Pokaż więcej</button>
 
     <script>
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
-      const maxVisibleItems = 2;
-      let isExpanded = false;
+      const itemsPerPage = 8; // Liczba wyników na stronę
+      let currentPage = 0;
+      let visibleItems = [];
 
       async function loadCampingList() {
         try {
@@ -164,16 +176,13 @@
           const campingList = document.getElementById("camping-list");
           campingList.innerHTML = "";
 
-          placemarks.forEach((placemark, index) => {
+          placemarks.forEach((placemark) => {
             const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
             const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
             if (coordinates) {
               const [lon, lat] = coordinates.split(",");
               const li = document.createElement("li");
-              if (index < maxVisibleItems) li.classList.add("visible");
-
-              // Zmodyfikowany HTML dla każdego punktu
               li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">
@@ -181,51 +190,46 @@
                   <a class="map-button" href="map.html?lat=${lat}&lon=${lon}&name=${encodeURIComponent(name)}" target="_blank">Pokaż na mapie</a>
                 </div>
               `;
-
               campingList.appendChild(li);
+              visibleItems.push(li);
             }
           });
+
+          showNextPage(); // Pokaż pierwszą stronę
         } catch (error) {
           console.error("Błąd podczas wczytywania pliku KML:", error);
         }
       }
 
-      function toggleShowAll() {
-        const campingList = document.getElementById("camping-list");
-        isExpanded = !isExpanded;
+      function showNextPage() {
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
 
-        if (isExpanded) {
-          campingList.querySelectorAll("li").forEach((item) => item.classList.add("visible"));
-        } else {
-          campingList.querySelectorAll("li").forEach((item, index) => {
-            if (index < maxVisibleItems) {
-              item.classList.add("visible");
-            } else {
-              item.classList.remove("visible");
-            }
-          });
-        }
-
-        document.getElementById("show-all-btn").textContent = isExpanded ? "Zwiń" : "Pokaż wszystkie";
-      }
-
-      function filterCampingList() {
-        const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-        const campingList = document.getElementById("camping-list");
-
-        const listItems = Array.from(campingList.querySelectorAll("li"));
-        listItems.forEach((item) => {
-          const text = item.querySelector("span").textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
+        visibleItems.forEach((item, index) => {
+          if (index >= start && index < end) {
             item.classList.add("visible");
           } else {
             item.classList.remove("visible");
           }
         });
+
+        currentPage++;
+
+        if (currentPage * itemsPerPage >= visibleItems.length) {
+          document.getElementById("show-more-btn").style.display = "none";
+        } else {
+          document.getElementById("show-more-btn").style.display = "block";
+        }
       }
 
-      document.getElementById("search-bar").addEventListener("input", filterCampingList);
-      document.getElementById("show-all-btn").addEventListener("click", toggleShowAll);
+      function collapseAll() {
+        visibleItems.forEach((item) => item.classList.remove("visible"));
+        currentPage = 0;
+        document.getElementById("show-more-btn").style.display = "block";
+      }
+
+      document.getElementById("show-all-btn").addEventListener("click", collapseAll);
+      document.getElementById("show-more-btn").addEventListener("click", showNextPage);
 
       loadCampingList();
     </script>

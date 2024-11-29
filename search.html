@@ -21,31 +21,29 @@
         background-color: #ffffff;
         border: 3px solid #15830d; /* Grubsze linie */
         border-radius: 8px;
-        padding: 15px; /* Więcej miejsca wokół */
+        padding: 15px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       }
 
       #search-section {
-        position: sticky;
+        position: relative; /* Ustawienie dla lepszego wyrównania */
         top: 0;
         width: 100%;
         background-color: #f8fafc;
         z-index: 1000;
-        border-bottom: 2px solid #15830d;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 10px;
+        border-bottom: 3px solid #15830d;
+        padding: 10px 0; /* Usunięto marginesy i dodano padding */
       }
 
       #search-bar-container {
         display: flex;
         width: 100%;
         align-items: center;
-        border: 2px solid #15830d;
+        border: 3px solid #15830d; /* Grubsza linia dla ramki */
         border-radius: 8px;
         padding: 5px;
         gap: 5px;
+        box-sizing: border-box; /* Dodano dla spójności */
       }
 
       #search-bar {
@@ -61,6 +59,7 @@
         margin-top: 10px;
         display: flex;
         gap: 10px;
+        justify-content: center;
       }
 
       .action-buttons button {
@@ -86,7 +85,7 @@
         padding: 10px;
         max-height: 400px;
         overflow-y: auto;
-        border: 2px solid #15830d;
+        border: 3px solid #15830d; /* Grubsze linie */
         border-radius: 8px;
         margin-top: 20px;
       }
@@ -94,7 +93,7 @@
       #camping-list li {
         display: none;
         align-items: center;
-        border: 3px solid #15830d; /* Grubsze linie obramowania */
+        border: 3px solid #15830d;
         border-radius: 8px;
         padding: 15px; /* Więcej miejsca w środku */
         font-size: 12px;

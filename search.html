@@ -44,6 +44,22 @@
       font-weight: bold;
     }
 
+    #show-all-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+      background-color: #facc15;
+      color: #000000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: -50px; /* Przesunięcie o 50px w lewo */
+    }
+
+    #show-all-btn:hover {
+      background-color: #e6b814;
+    }
+
     #camping-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
@@ -83,12 +99,12 @@
     .details-button,
     .map-button {
       flex: 1;
-      padding: 4px;
+      padding: 4px; /* Zmniejszenie rozmiaru ikon */
       text-align: center;
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      font-size: 10px;
+      font-size: 10px; /* Zmniejszenie czcionki */
       font-weight: bold;
       cursor: pointer;
       text-decoration: none;
@@ -134,6 +150,7 @@
   <div id="search-section">
     <div id="search-bar-container">
       <input type="text" id="search-bar" placeholder="Wyszukaj obiekt" />
+      <button id="show-all-btn">Pokaż wszystkie</button>
     </div>
   </div>
   <ul id="camping-list"></ul>
@@ -147,7 +164,6 @@
     const itemsPerPage = 8; // Liczba wyników na stronę
     let currentPage = 0;
     let visibleItems = [];
-    let filteredItems = []; // Lista elementów po filtrowaniu
 
     async function loadCampingList() {
       try {
@@ -186,7 +202,6 @@
           }
         });
 
-        filteredItems = [...visibleItems]; // Na początku brak filtrowania
         showNextPage(); // Pokaż pierwszą stronę
       } catch (error) {
         console.error("Błąd podczas wczytywania pliku KML:", error);
@@ -197,7 +212,7 @@
       const start = currentPage * itemsPerPage;
       const end = start + itemsPerPage;
 
-      filteredItems.forEach((item, index) => {
+      visibleItems.forEach((item, index) => {
         if (index >= start && index < end) {
           item.classList.add("visible");
         } else {
@@ -216,7 +231,7 @@
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
 
-        filteredItems.forEach((item, index) => {
+        visibleItems.forEach((item, index) => {
           if (index >= start && index < end) {
             item.classList.add("visible");
           } else {
@@ -230,22 +245,11 @@
 
     function togglePaginationButtons() {
       document.getElementById("show-more-btn").style.display =
-        currentPage * itemsPerPage < filteredItems.length ? "inline-block" : "none";
+        currentPage * itemsPerPage < visibleItems.length ? "inline-block" : "none";
       document.getElementById("show-less-btn").style.display =
         currentPage > 1 ? "inline-block" : "none";
     }
 
-    function filterCampingList() {
-      const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-      filteredItems = visibleItems.filter((item) =>
-        item.querySelector("span").textContent.toLowerCase().includes(searchTerm)
-      );
-
-      currentPage = 0;
-      showNextPage();
-    }
-
-    document.getElementById("search-bar").addEventListener("input", filterCampingList);
     document.getElementById("show-more-btn").addEventListener("click", showNextPage);
     document.getElementById("show-less-btn").addEventListener("click", showPreviousPage);
 

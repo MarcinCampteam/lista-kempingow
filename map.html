@@ -28,9 +28,11 @@
       const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml";
       const kempingiUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml";
       const polanamiotoweUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml";
+      const kempingiopenUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml";
 
       const kempingIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png";
       const polanamiotoweIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png";
+      const kempingiopenIconUrl = "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png";
 
       const map = L.map("map").setView([52.237049, 21.017532], 6);
       const markerCluster = L.markerClusterGroup({
@@ -44,21 +46,29 @@
 
       const kempingIcon = L.icon({
         iconUrl: kempingIconUrl,
-        iconSize: [50, 50],
+        iconSize: [30, 30],
         iconAnchor: [15, 15],
         popupAnchor: [0, -10],
       });
 
       const polanamiotoweIcon = L.icon({
         iconUrl: polanamiotoweIconUrl,
-        iconSize: [50, 50],
+        iconSize: [30, 30],
         iconAnchor: [15, 15],
         popupAnchor: [0, -10],
       });
 
-      const kempingMarkers = new Map(); // Przechowywanie markerów z Kempingi.kml
-      const polanamiotoweMarkers = new Map(); // Przechowywanie markerów z Polanamiotowe.kml
-      const allMarkers = []; // Wszystkie markery (do wyszukiwania)
+      const kempingiopenIcon = L.icon({
+        iconUrl: kempingiopenIconUrl,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      });
+
+      const kempingMarkers = new Map();
+      const polanamiotoweMarkers = new Map();
+      const kempingiopenMarkers = new Map();
+      const allMarkers = [];
 
       async function loadKmlData(url, icon = null, storageMap = null) {
         const response = await fetch(url);
@@ -82,7 +92,8 @@
               storageMap.set(`${lat},${lon}`, { marker, name });
             } else if (
               !kempingMarkers.has(`${lat},${lon}`) &&
-              !polanamiotoweMarkers.has(`${lat},${lon}`)
+              !polanamiotoweMarkers.has(`${lat},${lon}`) &&
+              !kempingiopenMarkers.has(`${lat},${lon}`)
             ) {
               markerCluster.addLayer(marker);
               allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
@@ -104,18 +115,17 @@
 
       async function loadAllMarkers() {
         try {
-          // Wczytaj kempingi
           await loadKmlData(kempingiUrl, kempingIcon, kempingMarkers);
           kempingMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
 
-          // Wczytaj pola namiotowe
           await loadKmlData(polanamiotoweUrl, polanamiotoweIcon, polanamiotoweMarkers);
           polanamiotoweMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
 
-          // Wczytaj resztę z map.kml
+          await loadKmlData(kempingiopenUrl, kempingiopenIcon, kempingiopenMarkers);
+          kempingiopenMarkers.forEach(({ marker }) => markerCluster.addLayer(marker));
+
           await loadKmlData(kmlUrl);
 
-          // Obsługa wyszukiwania punktu po URL
           const lat = getQueryParam("lat");
           const lon = getQueryParam("lon");
 

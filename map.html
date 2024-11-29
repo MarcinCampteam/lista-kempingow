@@ -174,4 +174,22 @@
             const targetMarker = allMarkers.find(
               (m) =>
                 parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
-                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed
+                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
+            );
+
+            if (targetMarker) {
+              map.setView([lat, lon], 15);
+              targetMarker.marker.openPopup();
+            } else {
+              console.warn("Nie znaleziono pasującego markera.");
+            }
+          }
+        } catch (error) {
+          console.error("Błąd podczas wczytywania danych KML:", error);
+        }
+      }
+
+      loadAllMarkers();
+    </script>
+  </body>
+</html>

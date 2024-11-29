@@ -148,7 +148,7 @@
 
       async function loadCampingList() {
         try {
-          const response = await fetch(kmlUrl);
+          const response = await fetch(kmlUrl, { cache: "force-cache" }); // Dodano buforowanie
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
           const kmlText = await response.text();
@@ -173,7 +173,6 @@
               const li = document.createElement("li");
               if (index < maxVisibleItems) li.classList.add("visible");
 
-              // Zmodyfikowany HTML dla każdego punktu
               li.innerHTML = `
                 <span>${name}</span>
                 <div class="button-container">

@@ -99,6 +99,7 @@
     }).addTo(map);
 
     const addedMarkers = new Set();
+    const allMarkers = [];
 
     async function fetchKml(url) {
       const response = await fetch(url);
@@ -125,12 +126,18 @@
               addedMarkers.add(key);
               const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
               markerCluster.addLayer(marker);
+              allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
             }
           }
         });
       } catch (error) {
         console.error(`Błąd ładowania pliku KML z ${url}:`, error);
       }
+    }
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
     }
 
     async function initializeMap() {
@@ -152,6 +159,22 @@
         }
 
         map.addLayer(markerCluster);
+
+        const lat = getQueryParam("lat");
+        const lon = getQueryParam("lon");
+
+        if (lat && lon) {
+          const targetMarker = allMarkers.find(
+            (m) =>
+              parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
+              parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
+          );
+
+          if (targetMarker) {
+            map.setView([lat, lon], 15);
+            targetMarker.marker.openPopup();
+          }
+        }
       } catch (error) {
         console.error("Błąd podczas inicjalizacji mapy:", error);
       }

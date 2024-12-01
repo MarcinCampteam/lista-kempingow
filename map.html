@@ -1,113 +1,109 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mapa Kempingów</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        width: 100%;
-        height: 100vh;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa Kempingów</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const urls = {
+      kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
+      kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
+      polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
+      kempingiopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml",
+      polanamiotoweopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml",
+      parkingilesne: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml",
+      kempingi1: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml",
+      atrakcje: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml",
+      miejscenabiwak: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Miejscenabiwak.kml",
+    };
 
-    <script>
-      const urls = {
-        kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
-        kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
-        polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
-        kempingiopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml",
-        polanamiotoweopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml",
-        parkingilesne: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml",
-        kempingi1: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml",
-        atrakcje: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml",
-        miejscenabiwak: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Miejscenabiwak.kml",
-      };
+    const icons = {
+      kempingi: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png",
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+      }),
+      polanamiotowe: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
+        iconSize: [50, 50],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+      }),
+      kempingiopen: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+      polanamiotoweopen: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+      parkingilesne: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Parking_Le%C5%9Bny.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+      kempingi1: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+      atrakcje: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Atrakcje.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+      miejscenabiwak: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Miejsce_Biwakowe.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
+      }),
+    };
 
-      const icons = {
-        kempingi: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png",
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
-          popupAnchor: [0, -20],
-        }),
-        polanamiotowe: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
-          iconSize: [50, 50],
-          iconAnchor: [20, 20],
-          popupAnchor: [0, -20],
-        }),
-        kempingiopen: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-        polanamiotoweopen: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-        parkingilesne: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Parking_Le%C5%9Bny.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-        kempingi1: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-        atrakcje: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Atrakcje.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-        miejscenabiwak: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Miejsce_Biwakowe.png",
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -10],
-        }),
-      };
+    const map = L.map("map").setView([52.237049, 21.017532], 6);
+    const markerCluster = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 50,
+      disableClusteringAtZoom: 12, // Opcja zmniejszająca problemy z rozgrupowywaniem
+    });
 
-      const map = L.map("map").setView([52.237049, 21.017532], 6);
-      const markerCluster = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 50,
-      });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map);
+    const addedMarkers = new Set();
 
-      const addedMarkers = new Set();
-      const allMarkers = [];
-
-      async function fetchKml(url) {
+    async function loadMarkers(url, icon) {
+      try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Błąd wczytywania pliku KML: ${url}`);
-        return response.text();
-      }
-
-      async function loadMarkers(url, icon, addToCluster = true) {
-        const kmlText = await fetchKml(url);
+        const kmlText = await response.text();
         const parser = new DOMParser();
         const kml = parser.parseFromString(kmlText, "application/xml");
         const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
@@ -123,61 +119,36 @@
             if (!addedMarkers.has(key)) {
               addedMarkers.add(key);
               const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
-
-              if (addToCluster) {
-                markerCluster.addLayer(marker);
-              } else {
-                marker.addTo(map);
-              }
-
-              allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
+              markerCluster.addLayer(marker);
             }
           }
         });
+      } catch (error) {
+        console.error("Błąd wczytywania markerów:", error);
       }
+    }
 
-      function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
+    async function initializeMap() {
+      try {
+        await Promise.all([
+          loadMarkers(urls.kempingi, icons.kempingi),
+          loadMarkers(urls.polanamiotowe, icons.polanamiotowe),
+          loadMarkers(urls.kempingiopen, icons.kempingiopen),
+          loadMarkers(urls.polanamiotoweopen, icons.polanamiotoweopen),
+          loadMarkers(urls.parkingilesne, icons.parkingilesne),
+          loadMarkers(urls.kempingi1, icons.kempingi1),
+          loadMarkers(urls.atrakcje, icons.atrakcje),
+          loadMarkers(urls.miejscenabiwak, icons.miejscenabiwak),
+          loadMarkers(urls.kml, icons.other),
+        ]);
+
+        map.addLayer(markerCluster);
+      } catch (error) {
+        console.error("Błąd podczas inicjalizacji mapy:", error);
       }
+    }
 
-      async function initializeMap() {
-        try {
-          await Promise.all([
-            loadMarkers(urls.kempingi, icons.kempingi, false),
-            loadMarkers(urls.polanamiotowe, icons.polanamiotowe, false),
-            loadMarkers(urls.kempingiopen, icons.kempingiopen),
-            loadMarkers(urls.polanamiotoweopen, icons.polanamiotoweopen),
-            loadMarkers(urls.parkingilesne, icons.parkingilesne),
-            loadMarkers(urls.kempingi1, icons.kempingi1),
-            loadMarkers(urls.atrakcje, icons.atrakcje),
-            loadMarkers(urls.miejscenabiwak, icons.miejscenabiwak),
-            loadMarkers(urls.kml, icons.other),
-          ]);
-
-          map.addLayer(markerCluster);
-
-          const lat = getQueryParam("lat");
-          const lon = getQueryParam("lon");
-
-          if (lat && lon) {
-            const targetMarker = allMarkers.find(
-              (m) =>
-                parseFloat(m.lat).toFixed(5) === parseFloat(lat).toFixed(5) &&
-                parseFloat(m.lon).toFixed(5) === parseFloat(lon).toFixed(5)
-            );
-
-            if (targetMarker) {
-              map.setView([lat, lon], 15);
-              targetMarker.marker.openPopup();
-            }
-          }
-        } catch (error) {
-          console.error("Błąd podczas inicjalizacji mapy:", error);
-        }
-      }
-
-      initializeMap();
-    </script>
-  </body>
+    initializeMap();
+  </script>
+</body>
 </html>

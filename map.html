@@ -29,10 +29,10 @@
       border-radius: 5px;
       padding: 5px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       z-index: 1000;
     }
-    #search-bar input {
+    #search-input {
       width: 100%;
       padding: 5px;
       border: none;
@@ -40,23 +40,41 @@
       font-size: 14px;
       background-color: lightgray;
     }
-    #search-bar button {
+    #search-button {
       background-color: green;
       color: white;
       border: none;
       padding: 5px 10px;
-      margin-left: 5px;
+      margin-top: 5px;
       border-radius: 5px;
       cursor: pointer;
+      align-self: flex-end;
     }
-    #search-bar button:hover {
+    #search-button:hover {
       background-color: darkgreen;
+    }
+    #suggestions {
+      margin-top: 5px;
+      background-color: white;
+      border: 1px solid green;
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestion {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .suggestion:hover {
+      background-color: lightgreen;
     }
   </style>
 </head>
 <body>
   <div id="search-bar">
     <input type="text" id="search-input" placeholder="Znajdź obiekt..." />
+    <div id="suggestions"></div>
     <button id="search-button">Szukaj</button>
   </div>
   <div id="map"></div>
@@ -176,6 +194,35 @@
     function initializeSearch() {
       const searchInput = document.getElementById("search-input");
       const searchButton = document.getElementById("search-button");
+      const suggestions = document.getElementById("suggestions");
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase().trim();
+        suggestions.innerHTML = "";
+        if (!query) {
+          suggestions.style.display = "none";
+          return;
+        }
+
+        const matches = allMarkers
+          .filter((m) => m.name.includes(query))
+          .slice(0, 4);
+
+        matches.forEach((match) => {
+          const suggestion = document.createElement("div");
+          suggestion.className = "suggestion";
+          suggestion.textContent = match.name;
+          suggestion.addEventListener("click", () => {
+            map.setView([match.lat, match.lon], 15);
+            match.marker.openPopup();
+            suggestions.style.display = "none";
+            searchInput.value = match.name;
+          });
+          suggestions.appendChild(suggestion);
+        });
+
+        suggestions.style.display = matches.length > 0 ? "block" : "none";
+      });
 
       searchButton.addEventListener("click", () => {
         const query = searchInput.value.toLowerCase().trim();

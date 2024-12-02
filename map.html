@@ -28,7 +28,6 @@
     }
     #search-bar {
       display: flex;
-      align-items: center;
       background-color: lightgray;
       border: 2px solid green;
       border-radius: 5px;
@@ -51,6 +50,7 @@
       padding: 5px 10px;
       border-radius: 3px;
       cursor: pointer;
+      margin-left: 5px;
     }
     #search-button:hover {
       background-color: darkgreen;
@@ -177,6 +177,7 @@
       const kml = parser.parseFromString(kmlText, "application/xml");
       const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
+      const fragment = new DocumentFragment(); // Optymalizacja
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
@@ -190,15 +191,17 @@
             const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
 
             if (addToCluster) {
-              markerCluster.addLayer(marker);
+              fragment.appendChild(marker); // Dodanie do fragmentu
             } else {
               marker.addTo(map);
             }
 
-            allMarkers.push({ marker, name: name, lat, lon }); // Zachowuje wielkość liter
+            allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
           }
         }
       });
+
+      markerCluster.addLayer(fragment); // Dodanie fragmentu do klastra
     }
 
     function initializeSearch() {
@@ -215,37 +218,32 @@
         }
 
         const matches = allMarkers
-          .filter((m) => m.name.toLowerCase().includes(query)) // Case-insensitive wyszukiwanie
+          .filter((m) => m.name.includes(query))
           .slice(0, 4);
 
+        const fragment = new DocumentFragment();
         matches.forEach((match) => {
           const suggestion = document.createElement("div");
           suggestion.className = "suggestion";
-          suggestion.textContent = match.name; // Zachowuje wielkość liter
+          suggestion.textContent = match.name;
           suggestion.addEventListener("click", () => {
             map.setView([match.lat, match.lon], 15);
             match.marker.openPopup();
             suggestions.style.display = "none";
-            searchInput.value = match.name; // Ustawia nazwę w pasku
+            searchInput.value = match.name;
           });
-          suggestions.appendChild(suggestion);
+          fragment.appendChild(suggestion);
         });
 
+        suggestions.appendChild(fragment); // Fragment do DOM
         suggestions.style.display = matches.length > 0 ? "block" : "none";
-      });
-
-      searchInput.addEventListener("input", () => {
-        if (!searchInput.value.trim()) {
-          suggestions.innerHTML = "";
-          suggestions.style.display = "none";
-        }
       });
 
       searchButton.addEventListener("click", () => {
         const query = searchInput.value.toLowerCase().trim();
         if (!query) return;
 
-        const targetMarker = allMarkers.find((m) => m.name.toLowerCase().includes(query));
+        const targetMarker = allMarkers.find((m) => m.name.includes(query));
 
         if (targetMarker) {
           map.setView([targetMarker.lat, targetMarker.lon], 15);

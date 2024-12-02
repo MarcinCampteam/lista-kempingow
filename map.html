@@ -246,8 +246,8 @@
 
     async function initializeMap() {
       await Promise.all([
-        loadMarkers(urls.kempingi, icons.kempingi),
-        loadMarkers(urls.polanamiotowe, icons.polanamiotowe),
+        loadMarkers(urls.kempingi, icons.kempingi,false),
+        loadMarkers(urls.polanamiotowe, icons.polanamiotowe,false),
         loadMarkers(urls.kempingiopen, icons.kempingiopen),
         loadMarkers(urls.polanamiotoweopen, icons.polanamiotoweopen),
         loadMarkers(urls.parkingilesne, icons.parkingilesne),

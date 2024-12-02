@@ -177,7 +177,6 @@
       const kml = parser.parseFromString(kmlText, "application/xml");
       const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
-      const fragment = new DocumentFragment(); // Optymalizacja
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
@@ -191,7 +190,7 @@
             const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
 
             if (addToCluster) {
-              fragment.appendChild(marker); // Dodanie do fragmentu
+              markerCluster.addLayer(marker);
             } else {
               marker.addTo(map);
             }
@@ -200,8 +199,6 @@
           }
         }
       });
-
-      markerCluster.addLayer(fragment); // Dodanie fragmentu do klastra
     }
 
     function initializeSearch() {
@@ -221,7 +218,6 @@
           .filter((m) => m.name.includes(query))
           .slice(0, 4);
 
-        const fragment = new DocumentFragment();
         matches.forEach((match) => {
           const suggestion = document.createElement("div");
           suggestion.className = "suggestion";
@@ -232,10 +228,9 @@
             suggestions.style.display = "none";
             searchInput.value = match.name;
           });
-          fragment.appendChild(suggestion);
+          suggestions.appendChild(suggestion);
         });
 
-        suggestions.appendChild(fragment); // Fragment do DOM
         suggestions.style.display = matches.length > 0 ? "block" : "none";
       });
 

@@ -28,7 +28,6 @@
     }
     #search-bar {
       display: flex;
-      flex-wrap: wrap; /* Zapewnia poprawną responsywność */
       background-color: lightgray;
       border: 2px solid green;
       border-radius: 5px;
@@ -43,7 +42,6 @@
       font-size: 14px;
       background-color: lightgray;
       border-radius: 3px;
-      min-width: 0; /* Rozwiązanie dla problemów z flexbox */
     }
     #search-button {
       background-color: green;
@@ -53,7 +51,6 @@
       border-radius: 3px;
       cursor: pointer;
       margin-left: 5px;
-      flex-shrink: 0; /* Zapobiega zmniejszaniu przycisku */
     }
     #search-button:hover {
       background-color: darkgreen;
@@ -93,15 +90,15 @@
   <div id="map"></div>
   <script>
     const urls = {
-      kml: "/map.kml",
-      kempingi: "/Kempingi.kml",
-      polanamiotowe: "/Polanamiotowe.kml",
-      kempingiopen: "/Kempingiopen.kml",
-      polanamiotoweopen: "/Polanamiotoweopen.kml",
-      parkingilesne: "/Parkingilesne.kml",
-      kempingi1: "/Kempingi1.kml",
-      atrakcje: "/Atrakcje.kml",
-      miejscenabiwak: "/Miejscenabiwak.kml",
+      kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
+      kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
+      polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
+      kempingiopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml",
+      polanamiotoweopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml",
+      parkingilesne: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml",
+      kempingi1: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml",
+      atrakcje: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml",
+      miejscenabiwak: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Miejscenabiwak.kml",
     };
 
     const icons = {
@@ -113,7 +110,7 @@
       }),
       polanamiotowe: L.icon({
         iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
-        iconSize: [40, 40],
+        iconSize: [50, 50],
         iconAnchor: [20, 20],
         popupAnchor: [0, -20],
       }),
@@ -174,7 +171,7 @@
       return response.text();
     }
 
-    async function loadMarkers(url, icon, addToCluster = true) {
+    async function loadMarkers(url, icon) {
       const kmlText = await fetchKml(url);
       const parser = new DOMParser();
       const kml = parser.parseFromString(kmlText, "application/xml");
@@ -192,13 +189,8 @@
             addedMarkers.add(key);
             const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
 
-            if (addToCluster) {
-              markerCluster.addLayer(marker);
-            } else {
-              marker.addTo(map);
-            }
-
-            allMarkers.push({ marker, name, lat, lon }); // Zapisuje nazwę z oryginalnymi wielkimi literami
+            markerCluster.addLayer(marker);
+            allMarkers.push({ marker, name: name.toLowerCase(), lat, lon });
           }
         }
       });
@@ -218,13 +210,13 @@
         }
 
         const matches = allMarkers
-          .filter((m) => m.name.toLowerCase().includes(query))
+          .filter((m) => m.name.includes(query))
           .slice(0, 4);
 
         matches.forEach((match) => {
           const suggestion = document.createElement("div");
           suggestion.className = "suggestion";
-          suggestion.textContent = match.name; // Wyświetla nazwę z wielkimi literami
+          suggestion.textContent = match.name;
           suggestion.addEventListener("click", () => {
             map.setView([match.lat, match.lon], 15);
             match.marker.openPopup();
@@ -241,7 +233,7 @@
         const query = searchInput.value.toLowerCase().trim();
         if (!query) return;
 
-        const targetMarker = allMarkers.find((m) => m.name.toLowerCase().includes(query));
+        const targetMarker = allMarkers.find((m) => m.name.includes(query));
 
         if (targetMarker) {
           map.setView([targetMarker.lat, targetMarker.lon], 15);
@@ -254,8 +246,8 @@
 
     async function initializeMap() {
       await Promise.all([
-        loadMarkers(urls.kempingi, icons.kempingi, false), // Kempingi - bez grupowania
-        loadMarkers(urls.polanamiotowe, icons.polanamiotowe, false), // Pola namiotowe - bez grupowania
+        loadMarkers(urls.kempingi, icons.kempingi,false),
+        loadMarkers(urls.polanamiotowe, icons.polanamiotowe,false),
         loadMarkers(urls.kempingiopen, icons.kempingiopen),
         loadMarkers(urls.polanamiotoweopen, icons.polanamiotoweopen),
         loadMarkers(urls.parkingilesne, icons.parkingilesne),

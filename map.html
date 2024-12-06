@@ -23,7 +23,7 @@
       line-height: 1.5;
       color: #333;
       max-width: 300px;
-      word-wrap: break-word; /* Zawijanie tekstu w ramce */
+      word-wrap: break-word;
     }
     .popup-content strong {
       color: #2b7a2b;
@@ -41,7 +41,7 @@
       margin-top: 10px;
       padding: 5px 10px;
       background-color: #2b7a2b;
-      color: white;
+      color: black;
       text-align: center;
       text-decoration: none;
       border-radius: 5px;
@@ -50,6 +50,7 @@
     }
     .popup-button:hover {
       background-color: #1f5e1f;
+      color: white;
     }
   </style>
 </head>
@@ -57,8 +58,15 @@
   <div id="map"></div>
   <script>
     const urls = {
+      kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
       kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
       polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
+      kempingiopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml",
+      polanamiotoweopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml",
+      parkingilesne: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml",
+      kempingi1: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml",
+      atrakcje: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml",
+      miejscenabiwak: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Miejscenabiwak.kml",
     };
 
     const icons = {
@@ -95,9 +103,8 @@
       const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
       placemarks.forEach((placemark) => {
-        const description = placemark.getElementsByTagName("description")[0]?.textContent || "Brak opisu";
+        const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
         const phone = placemark.getElementsByTagName("phone")[0]?.textContent || "Brak telefonu";
-        const website = placemark.getElementsByTagName("website")[0]?.textContent || "Brak strony";
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
         if (coordinates) {
@@ -105,9 +112,8 @@
 
           const popupContent = `
             <div class="popup-content">
-              <strong>Opis:</strong> ${description}<br>
-              <strong>Telefon:</strong> ${phone}<br>
-              <strong>Strona:</strong> <a href="${website}" target="_blank">${website}</a><br>
+              <strong>${name}</strong><br>
+              <strong>Telefon:</strong> <a href="tel:${phone}">${phone}</a><br>
               <a class="popup-button" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank">Prowadź do</a>
             </div>
           `;

@@ -37,7 +37,7 @@
       text-decoration: underline;
     }
     .popup-button {
-      display: inline-block;
+      display: block;
       margin-top: 10px;
       padding: 5px 10px;
       background-color: #2b7a2b;
@@ -45,7 +45,8 @@
       text-align: center;
       text-decoration: none;
       border-radius: 5px;
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: bold;
       cursor: pointer;
     }
     .popup-button:hover {
@@ -61,12 +62,6 @@
       kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
       kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
       polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
-      kempingiopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingiopen.kml",
-      polanamiotoweopen: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotoweopen.kml",
-      parkingilesne: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Parkingilesne.kml",
-      kempingi1: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi1.kml",
-      atrakcje: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Atrakcje.kml",
-      miejscenabiwak: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Miejscenabiwak.kml",
     };
 
     const icons = {
@@ -85,6 +80,10 @@
     };
 
     const map = L.map("map").setView([52.237049, 21.017532], 6);
+    const markerCluster = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 50,
+    });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
@@ -96,6 +95,12 @@
       return response.text();
     }
 
+    function extractPhone(description) {
+      const phoneRegex = /(?:tel|phone):\s*([\d\s+-]+)/i;
+      const match = description.match(phoneRegex);
+      return match ? match[1] : "Brak telefonu";
+    }
+
     async function loadMarkers(url, icon) {
       const kmlText = await fetchKml(url);
       const parser = new DOMParser();
@@ -104,7 +109,8 @@
 
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
-        const phone = placemark.getElementsByTagName("phone")[0]?.textContent || "Brak telefonu";
+        const description = placemark.getElementsByTagName("description")[0]?.textContent || "Brak opisu";
+        const phone = placemark.getElementsByTagName("phone")[0]?.textContent || extractPhone(description);
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
         if (coordinates) {
@@ -119,9 +125,11 @@
           `;
 
           const marker = L.marker([lat, lon], { icon }).bindPopup(popupContent);
-          marker.addTo(map);
+          markerCluster.addLayer(marker);
         }
       });
+
+      map.addLayer(markerCluster);
     }
 
     async function initializeMap() {

@@ -182,6 +182,7 @@
 
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
+        const description = placemark.getElementsByTagName("description")[0]?.textContent || "";
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
         if (coordinates) {
@@ -190,7 +191,12 @@
 
           if (!addedMarkers.has(key)) {
             addedMarkers.add(key);
-            const marker = L.marker([lat, lon], { icon }).bindPopup(`<strong>${name}</strong>`);
+
+            const popupContent = url === urls.kempingi || url === urls.polanamiotowe
+              ? `<strong>${name}</strong><br>${description}`
+              : `<strong>${name}</strong>`;
+
+            const marker = L.marker([lat, lon], { icon }).bindPopup(popupContent);
 
             if (addToCluster) {
               markerCluster.addLayer(marker);
@@ -198,7 +204,7 @@
               marker.addTo(map);
             }
 
-            allMarkers.push({ marker, name, lat, lon }); // Zapisuje nazwę z oryginalnymi wielkimi literami
+            allMarkers.push({ marker, name, lat, lon });
           }
         }
       });

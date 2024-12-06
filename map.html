@@ -18,6 +18,68 @@
       width: 100%;
       height: 100vh;
     }
+    #search-container {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      z-index: 1000;
+    }
+    #search-bar {
+      display: flex;
+      flex-wrap: wrap;
+      background-color: lightgray;
+      border: 2px solid green;
+      border-radius: 5px;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    #search-input {
+      flex: 1;
+      padding: 5px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      background-color: lightgray;
+      border-radius: 3px;
+      min-width: 0;
+    }
+    #search-button {
+      background-color: green;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-left: 5px;
+      flex-shrink: 0;
+    }
+    #search-button:hover {
+      background-color: darkgreen;
+    }
+    #suggestions {
+      margin-top: 5px;
+      background-color: white;
+      border: 1px solid green;
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+    .suggestion {
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #ddd;
+    }
+    .suggestion:last-child {
+      border-bottom: none;
+    }
+    .suggestion:hover {
+      background-color: lightgreen;
+    }
     .popup-content {
       font-size: 14px;
       line-height: 1.5;
@@ -37,45 +99,45 @@
       text-decoration: underline;
     }
     .popup-button {
-      display: block;
+      display: inline-block;
       margin-top: 10px;
       padding: 5px 10px;
-      background-color: #2b7a2b;
-      color: black;
+      border: 2px solid #2b7a2b;
+      color: #2b7a2b;
       text-align: center;
       text-decoration: none;
       border-radius: 5px;
       font-size: 14px;
       font-weight: bold;
       cursor: pointer;
+      background-color: transparent;
     }
     .popup-button:hover {
-      background-color: #1f5e1f;
-      color: white;
+      background-color: #e8f5e8;
+      color: #1f5e1f;
     }
   </style>
 </head>
 <body>
+  <div id="search-container">
+    <div id="search-bar">
+      <input type="text" id="search-input" placeholder="Znajdź obiekt..." />
+      <button id="search-button">Szukaj</button>
+    </div>
+    <div id="suggestions"></div>
+  </div>
   <div id="map"></div>
   <script>
     const urls = {
       kml: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/map.kml",
-      kempingi: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Kempingi.kml",
-      polanamiotowe: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/refs/heads/main/Polanamiotowe.kml",
     };
 
     const icons = {
-      kempingi: L.icon({
-        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi_Polecane.png",
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -20],
-      }),
-      polanamiotowe: L.icon({
-        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Pole_Namiotowe.png",
-        iconSize: [50, 50],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -20],
+      default: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/MarcinCampteam/mapa-kempingow/main/icons/Ikona_Kempingi.png",
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -10],
       }),
     };
 
@@ -89,6 +151,8 @@
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
+    const allMarkers = [];
+
     async function fetchKml(url) {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Błąd wczytywania pliku KML: ${url}`);
@@ -101,7 +165,7 @@
       return match ? match[1] : "Brak telefonu";
     }
 
-    async function loadMarkers(url, icon) {
+    async function loadMarkers(url) {
       const kmlText = await fetchKml(url);
       const parser = new DOMParser();
       const kml = parser.parseFromString(kmlText, "application/xml");
@@ -110,12 +174,11 @@
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
         const description = placemark.getElementsByTagName("description")[0]?.textContent || "Brak opisu";
-        const phone = placemark.getElementsByTagName("phone")[0]?.textContent || extractPhone(description);
+        const phone = extractPhone(description);
         const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
 
         if (coordinates) {
           const [lon, lat] = coordinates.split(",");
-
           const popupContent = `
             <div class="popup-content">
               <strong>${name}</strong><br>
@@ -124,19 +187,52 @@
             </div>
           `;
 
-          const marker = L.marker([lat, lon], { icon }).bindPopup(popupContent);
+          const marker = L.marker([lat, lon], { icon: icons.default }).bindPopup(popupContent);
           markerCluster.addLayer(marker);
+
+          allMarkers.push({ marker, name, lat, lon });
         }
       });
 
       map.addLayer(markerCluster);
     }
 
+    function initializeSearch() {
+      const searchInput = document.getElementById("search-input");
+      const suggestions = document.getElementById("suggestions");
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase().trim();
+        suggestions.innerHTML = "";
+        if (!query) {
+          suggestions.style.display = "none";
+          return;
+        }
+
+        const matches = allMarkers
+          .filter((m) => m.name.toLowerCase().includes(query))
+          .slice(0, 4);
+
+        matches.forEach((match) => {
+          const suggestion = document.createElement("div");
+          suggestion.className = "suggestion";
+          suggestion.textContent = match.name;
+          suggestion.addEventListener("click", () => {
+            map.setView([match.lat, match.lon], 15);
+            match.marker.openPopup();
+            suggestions.style.display = "none";
+            searchInput.value = match.name;
+          });
+          suggestions.appendChild(suggestion);
+        });
+
+        suggestions.style.display = matches.length > 0 ? "block" : "none";
+      });
+    }
+
     async function initializeMap() {
-      await Promise.all([
-        loadMarkers(urls.kempingi, icons.kempingi),
-        loadMarkers(urls.polanamiotowe, icons.polanamiotowe),
-      ]);
+      await loadMarkers(urls.kml);
+      initializeSearch();
     }
 
     initializeMap();

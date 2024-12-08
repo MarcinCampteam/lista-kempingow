@@ -7,7 +7,6 @@ async function loadDetails() {
     const response = await fetch("https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/szczegoly.json");
     if (!response.ok) throw new Error("Nie udało się załadować pliku szczegóły.json");
     const data = await response.json();
-
     // Konwersja danych na mapę (nazwa -> link)
     detailsMap = data.reduce((map, item) => {
       const [name, link] = item.split(",");
@@ -38,9 +37,17 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag, extractPhone = false) 
       if (phoneTag === "description") {
         const description = placemark.getElementsByTagName("description")[0]?.textContent;
         if (description) {
-          const match = description.match(/phone:\s*([\+0-9\s\-]+)/i);
+          // Wyrażenie regularne do wyszukiwania numerów telefonów w `description`
+          const match = description.match(/Telefon:\s*([\+0-9\s\-]+)/i);
           phone = match ? match[1].replace(/\s+/g, "").trim() : null;
         }
+      } else if (phoneTag === "ExtendedData") {
+        const extendedData = placemark.getElementsByTagName("Data");
+        Array.from(extendedData).forEach((dataTag) => {
+          if (dataTag.getAttribute("name") === "phone" || dataTag.getAttribute("name") === "telefon") {
+            phone = dataTag.getElementsByTagName("value")[0]?.textContent.trim();
+          }
+        });
       } else {
         phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
       }
@@ -118,8 +125,11 @@ function generatePopupContent(name, lat, lon, phoneNumbers) {
 
 // Funkcja aktualizująca popupy dla wszystkich markerów
 function updatePopups(markers, phoneNumbers) {
+  console.log("Markers:", markers);
+  console.log("Phone numbers:", phoneNumbers);
   markers.forEach(({ marker, name, lat, lon }) => {
     const popupContent = generatePopupContent(name, lat, lon, phoneNumbers);
+    console.log(`Popup content for ${name}:`, popupContent);
     marker.bindPopup(popupContent);
   });
 }

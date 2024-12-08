@@ -22,8 +22,8 @@ async function loadDetails() {
 function generatePopupContent(name, lat, lon, description) {
   let popupContent = `<strong>${name}</strong><br>`;
 
-  // Dodanie numeru telefonu, jeśli jest w description
-  const match = description?.match(/Telefon[:\s]*([\+0-9\s\-]+)/i); // Wyszukaj numer telefonu
+  // Wyciąganie numeru telefonu z description
+  const match = description?.match(/Telefon[:\s]*([\+0-9\s\-]+)/i); // Dopasuj numer telefonu
   const phone = match ? match[1].replace(/\s+/g, "").trim() : "Brak numeru telefonu";
   const phoneLink = phone !== "Brak numeru telefonu"
     ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
@@ -66,4 +66,42 @@ function updatePopups(markers) {
 async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
   updatePopups(markers); // Zaktualizuj popupy dla markerów
+}
+
+// Funkcja wczytująca dane z plików KML i przypisująca markerom
+async function loadKMLData(kmlUrl) {
+  try {
+    const response = await fetch(kmlUrl);
+    if (!response.ok) throw new Error(`Nie udało się załadować pliku KML: ${kmlUrl}`);
+    const kmlText = await response.text();
+    const parser = new DOMParser();
+    const kml = parser.parseFromString(kmlText, "application/xml");
+    const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+
+    // Przetwarzanie każdego Placemark
+    return placemarks.map((placemark) => {
+      const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
+      const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
+      const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
+      const [lon, lat] = coordinates.split(",").map((coord) => parseFloat(coord));
+
+      return { name, description, lat, lon };
+    });
+  } catch (error) {
+    console.error(`Błąd podczas wczytywania i przetwarzania pliku KML: ${kmlUrl}`, error);
+    return [];
+  }
+}
+
+// Przykład użycia
+async function initializeMarkers() {
+  const kmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml";
+  const placemarks = await loadKMLData(kmlUrl);
+
+  const markers = placemarks.map(({ name, description, lat, lon }) => {
+    const marker = L.marker([lat, lon]); // Tworzenie markera Leaflet
+    return { marker, name, lat, lon, description };
+  });
+
+  await loadDetailsAndUpdatePopups(markers); // Ładowanie szczegółów i aktualizacja popupów
 }

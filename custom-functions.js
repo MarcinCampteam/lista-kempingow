@@ -29,7 +29,11 @@ function generatePopupContent(name, lat, lon) {
         Pokaż szczegóły
       </a><br>`;
   } else {
-    popupContent += "Dodaj info o tej lokalizacji www.campteam.pl/dodaj.<br>";
+    popupContent += `
+      <a href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" 
+         target="_blank" class="update-button">
+        Aktualizuj
+      </a><br>`;
   }
 
   // Dodanie przycisku "Prowadź do"

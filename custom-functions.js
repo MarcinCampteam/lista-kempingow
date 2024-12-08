@@ -13,6 +13,7 @@ async function loadDetails() {
       map[name.trim()] = link.trim();
       return map;
     }, {});
+    console.log("Szczegóły załadowane:", detailsMap);
   } catch (error) {
     console.error("Błąd podczas wczytywania szczegółów:", error);
   }
@@ -46,6 +47,7 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
       return acc;
     }, {});
 
+    console.log(`Numery telefonów załadowane z ${kmlUrl}:`, phoneNumbers);
     return phoneNumbers;
   } catch (error) {
     console.error(`Błąd podczas przetwarzania pliku ${kmlUrl}:`, error);
@@ -78,6 +80,7 @@ async function loadPhoneNumbers() {
     Object.assign(phoneNumbers, data); // Dodaj numery do głównego obiektu
   }
 
+  console.log("Wszystkie numery telefonów załadowane:", phoneNumbers);
   return phoneNumbers;
 }
 

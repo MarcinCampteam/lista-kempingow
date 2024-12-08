@@ -29,14 +29,14 @@ function generatePopupContent(name, lat, lon) {
         Pokaż szczegóły
       </a><br>`;
   } else {
-    popupContent += "Brak szczegółowych informacji.<br>";
+    popupContent += "Dodaj info o tej lokalizacji www.campteam.pl/dodaj.<br>";
   }
 
   // Dodanie przycisku "Prowadź do"
   popupContent += `
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
-      Prowadź do
+      Prowadź
     </a>`;
 
   return popupContent;

@@ -30,7 +30,16 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
 
     const phoneNumbers = placemarks.reduce((acc, placemark) => {
       const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
-      const phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      let phone = null;
+
+      // Pobierz numer z odpowiedniego tagu
+      if (phoneTag === "description") {
+        const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
+        phone = description ? extractPhoneNumber(description) : null;
+      } else {
+        phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      }
+
       if (name) {
         acc[name] = phone || null; // Dodaj numer telefonu lub null
       }
@@ -42,6 +51,13 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
     console.error(`Błąd podczas przetwarzania pliku ${kmlUrl}:`, error);
     return {};
   }
+}
+
+// Funkcja do wyodrębniania numeru telefonu z tekstu opisu
+function extractPhoneNumber(text) {
+  const phoneRegex = /\+?\d[\d\s\-()]{7,}/; // Prosty regex do wyszukiwania numerów telefonów
+  const match = text.match(phoneRegex);
+  return match ? match[0].trim() : null;
 }
 
 // Funkcja ładująca wszystkie numery telefonów z plików KML

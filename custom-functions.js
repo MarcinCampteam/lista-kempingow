@@ -29,7 +29,7 @@ function generatePopupContent(name, lat, lon) {
         Pokaż szczegóły
       </a><br>`;
   } else {
-    popupContent += "Dodaj info o tej lokalizacji www.campteam.pl/dodaj.<br>";
+    popupContent += "Dodaj info o tym miejscu: campteam.pl/dodaj<br>";
   }
 
   // Dodanie przycisku "Prowadź do"

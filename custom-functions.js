@@ -20,7 +20,7 @@ async function loadDetails() {
 }
 
 // Funkcja wczytująca numery telefonów z plików KML
-async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
+async function fetchPhoneNumbersFromKML(kmlUrl, phoneTags) {
   try {
     const response = await fetch(kmlUrl);
     if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${kmlUrl}`);
@@ -33,12 +33,10 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
       const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
       let phone = null;
 
-      // Pobierz numer z odpowiedniego tagu
-      if (phoneTag === "description") {
-        const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
-        phone = description ? extractPhoneNumber(description) : null;
-      } else if (phoneTag === "phone" || phoneTag === "telefon") {
-        phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      // Przeszukaj wszystkie możliwe tagi, aby znaleźć numer telefonu
+      for (const tag of phoneTags) {
+        phone = placemark.getElementsByTagName(tag)[0]?.textContent.trim();
+        if (phone) break;
       }
 
       if (name) {
@@ -55,28 +53,21 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
   }
 }
 
-// Funkcja do wyodrębniania numeru telefonu z tekstu opisu
-function extractPhoneNumber(text) {
-  const phoneRegex = /\+?\d[\d\s\-()]{7,}/; // Prosty regex do wyszukiwania numerów telefonów
-  const match = text.match(phoneRegex);
-  return match ? match[0].trim() : null;
-}
-
 // Funkcja ładująca wszystkie numery telefonów z plików KML
 async function loadPhoneNumbers() {
   const kmlFiles = [
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml", tag: "description" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml", tag: "phone" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml", tag: "telefon" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml", tag: "description" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml", tag: "phone" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml", tag: "description" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml", tags: ["description"] },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml", tags: ["phone"] },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml", tags: ["telefon", "phone"] },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml", tags: ["description"] },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml", tags: ["phone"] },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml", tags: ["description"] },
   ];
 
   const phoneNumbers = {};
 
   for (const file of kmlFiles) {
-    const data = await fetchPhoneNumbersFromKML(file.url, file.tag);
+    const data = await fetchPhoneNumbersFromKML(file.url, file.tags);
     Object.assign(phoneNumbers, data); // Dodaj numery do głównego obiektu
   }
 

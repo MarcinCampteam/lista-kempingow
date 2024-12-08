@@ -7,6 +7,7 @@ async function loadDetails() {
     const response = await fetch("https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/szczegoly.json");
     if (!response.ok) throw new Error("Nie udało się załadować pliku szczegóły.json");
     const data = await response.json();
+
     // Konwersja danych na mapę (nazwa -> link)
     detailsMap = data.reduce((map, item) => {
       const [name, link] = item.split(",");
@@ -31,12 +32,17 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag, extractPhone = false) 
 
     const phoneNumbers = placemarks.reduce((acc, placemark) => {
       const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
-      let phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      let phone = null;
 
-      // Jeśli pole `description`, wyciągnij tylko numer telefonu
-      if (extractPhone && phone) {
-        const match = phone.match(/\+?\d[\d\s-]{5,}/); // Wyszukaj numer telefonu w tekście
-        phone = match ? match[0].replace(/\s+/g, "") : null; // Usuń spacje, jeśli numer istnieje
+      // Wyszukiwanie numeru w podanym tagu
+      if (phoneTag === "description") {
+        const description = placemark.getElementsByTagName("description")[0]?.textContent;
+        if (description) {
+          const match = description.match(/phone:\s*([\+0-9\s\-]+)/i);
+          phone = match ? match[1].replace(/\s+/g, "").trim() : null;
+        }
+      } else {
+        phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
       }
 
       if (name) {

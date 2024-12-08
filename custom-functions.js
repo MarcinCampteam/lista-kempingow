@@ -18,34 +18,9 @@ async function loadDetails() {
   }
 }
 
-// Funkcja do wyodrębniania numeru telefonu
-function extractPhone(placemark) {
-  const possibleFields = [
-    placemark.getElementsByTagName("phone")[0]?.textContent || "",
-    placemark.getElementsByTagName("description")[0]?.textContent || "",
-    placemark.getElementsByTagName("opis")[0]?.textContent || "", // Dodatkowe pola
-  ];
-
-  // Wyszukiwanie numeru telefonu w polach
-  for (const field of possibleFields) {
-    const phoneMatch = field.match(/(?:\+?\d[\d\s-]{7,15}\d)/); // Prosty regex dla numerów telefonów
-    if (phoneMatch) {
-      return phoneMatch[0].trim();
-    }
-  }
-  return null;
-}
-
 // Funkcja generująca treść popupu
-function generatePopupContent(name, lat, lon, phone) {
+function generatePopupContent(name, lat, lon) {
   let popupContent = `<strong>${name}</strong><br>`;
-
-  // Dodanie numeru telefonu
-  if (phone) {
-    popupContent += `Kontakt: <a href="tel:${phone}" class="phone-link">${phone}</a><br>`;
-  } else {
-    popupContent += "Brak numeru telefonu.<br>";
-  }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
@@ -68,17 +43,15 @@ function generatePopupContent(name, lat, lon, phone) {
 }
 
 // Funkcja aktualizująca popupy dla wszystkich markerów
-function updatePopups(markers, placemarks) {
-  markers.forEach(({ marker, name, lat, lon }, index) => {
-    const placemark = placemarks[index];
-    const phone = extractPhone(placemark); // Pobierz numer telefonu
-    const popupContent = generatePopupContent(name, lat, lon, phone);
+function updatePopups(markers) {
+  markers.forEach(({ marker, name, lat, lon }) => {
+    const popupContent = generatePopupContent(name, lat, lon);
     marker.bindPopup(popupContent);
   });
 }
 
 // Funkcja do wczytania szczegółów i aktualizacji popupów
-async function loadDetailsAndUpdatePopups(markers, placemarks) {
+async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
-  updatePopups(markers, placemarks); // Zaktualizuj popupy dla markerów
+  updatePopups(markers); // Zaktualizuj popupy dla markerów
 }

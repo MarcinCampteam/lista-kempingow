@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="custom-functions.js"></script> <!-- Dodano obsługę dodatkowych funkcji -->
   <style>
     body {
       margin: 0;
@@ -266,6 +267,9 @@
 
       map.addLayer(markerCluster);
       initializeSearch();
+
+      // Wywołanie funkcji z custom-functions.js
+      await loadDetailsAndUpdatePopups(allMarkers);
     }
 
     initializeMap();

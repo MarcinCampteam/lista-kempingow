@@ -82,36 +82,42 @@
       background-color: lightgreen;
     }
     .details-button {
-  display: inline-block;
-  margin: 5px 0;
-  padding: 5px 10px;
-  border: 2px solid #ffc107;
-  color: #000;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-.details-button:hover {
-  background-color: #fff8e1;
-}
-
-.navigate-button {
-  display: inline-block;
-  margin: 5px 0;
-  padding: 5px 10px;
-  border: 2px solid #28a745;
-  color: #28a745;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 5px;
-}
-.navigate-button:hover {
-  background-color: #e9f7ef;
-  color: #155724;
-}
-
+      display: inline-block;
+      margin: 5px 0;
+      padding: 5px 10px;
+      border: 2px solid #ffc107;
+      color: #000;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+    .details-button:hover {
+      background-color: #fff8e1;
+    }
+    .navigate-button {
+      display: inline-block;
+      margin: 5px 0;
+      padding: 5px 10px;
+      border: 2px solid #28a745;
+      color: #28a745;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+    .navigate-button:hover {
+      background-color: #e9f7ef;
+      color: #155724;
+    }
+    .phone-link {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .phone-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -199,6 +205,7 @@
 
     const addedMarkers = new Set();
     const allMarkers = [];
+    const allPlacemarks = []; // Przechowywanie placemarks
 
     async function fetchKml(url) {
       const response = await fetch(url);
@@ -211,6 +218,7 @@
       const parser = new DOMParser();
       const kml = parser.parseFromString(kmlText, "application/xml");
       const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
+      allPlacemarks.push(...placemarks); // Dodanie placemarks do globalnej listy
 
       placemarks.forEach((placemark) => {
         const name = placemark.getElementsByTagName("name")[0]?.textContent || "Brak nazwy";
@@ -230,7 +238,7 @@
               marker.addTo(map);
             }
 
-            allMarkers.push({ marker, name, lat, lon }); // Zapisuje nazwę z oryginalnymi wielkimi literami
+            allMarkers.push({ marker, name, lat, lon });
           }
         }
       });
@@ -300,7 +308,7 @@
       initializeSearch();
 
       // Wywołanie funkcji z custom-functions.js
-      await loadDetailsAndUpdatePopups(allMarkers);
+      await loadDetailsAndUpdatePopups(allMarkers, allPlacemarks);
     }
 
     initializeMap();

@@ -20,7 +20,7 @@ async function loadDetails() {
 }
 
 // Funkcja wczytująca numery telefonów z plików KML
-async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
+async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag, extractPhone = false) {
   try {
     const response = await fetch(kmlUrl);
     if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${kmlUrl}`);
@@ -31,7 +31,14 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
 
     const phoneNumbers = placemarks.reduce((acc, placemark) => {
       const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
-      const phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      let phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+
+      // Jeśli pole `description`, wyciągnij tylko numer telefonu
+      if (extractPhone && phone) {
+        const match = phone.match(/\+?\d[\d\s-]{5,}/); // Wyszukaj numer telefonu w tekście
+        phone = match ? match[0].replace(/\s+/g, "") : null; // Usuń spacje, jeśli numer istnieje
+      }
+
       if (name) {
         acc[name] = phone || null; // Dodaj numer telefonu lub null
       }
@@ -49,18 +56,18 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
 // Funkcja ładująca wszystkie numery telefonów z plików KML
 async function loadPhoneNumbers() {
   const kmlFiles = [
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml", tag: "description" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml", tag: "phone" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml", tag: "telefon" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml", tag: "description" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml", tag: "phone" },
-    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml", tag: "description" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml", tag: "description", extract: true },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml", tag: "phone", extract: false },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml", tag: "telefon", extract: false },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml", tag: "description", extract: true },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml", tag: "phone", extract: false },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml", tag: "description", extract: true },
   ];
 
   const phoneNumbers = {};
 
   for (const file of kmlFiles) {
-    const data = await fetchPhoneNumbersFromKML(file.url, file.tag);
+    const data = await fetchPhoneNumbersFromKML(file.url, file.tag, file.extract);
     Object.assign(phoneNumbers, data); // Dodaj numery do głównego obiektu
   }
 

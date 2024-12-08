@@ -36,7 +36,7 @@ async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
       if (phoneTag === "description") {
         const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
         phone = description ? extractPhoneNumber(description) : null;
-      } else {
+      } else if (phoneTag === "phone" || phoneTag === "telefon") {
         phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
       }
 

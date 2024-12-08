@@ -19,8 +19,16 @@ async function loadDetails() {
 }
 
 // Funkcja generująca treść popupu
-function generatePopupContent(name, lat, lon) {
+function generatePopupContent(name, lat, lon, description) {
   let popupContent = `<strong>${name}</strong><br>`;
+
+  // Dodanie numeru telefonu, jeśli jest w description
+  const match = description?.match(/Telefon[:\s]*([\+0-9\s\-]+)/i); // Wyszukaj numer telefonu
+  const phone = match ? match[1].replace(/\s+/g, "").trim() : "Brak numeru telefonu";
+  const phoneLink = phone !== "Brak numeru telefonu"
+    ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
+    : phone;
+  popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
@@ -48,8 +56,8 @@ function generatePopupContent(name, lat, lon) {
 
 // Funkcja aktualizująca popupy dla wszystkich markerów
 function updatePopups(markers) {
-  markers.forEach(({ marker, name, lat, lon }) => {
-    const popupContent = generatePopupContent(name, lat, lon);
+  markers.forEach(({ marker, name, lat, lon, description }) => {
+    const popupContent = generatePopupContent(name, lat, lon, description);
     marker.bindPopup(popupContent);
   });
 }

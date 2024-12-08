@@ -18,41 +18,78 @@ async function loadDetails() {
   }
 }
 
-// Funkcja wczytująca dane z plików KML i pobierająca numery telefonów z description
-async function loadKMLData(kmlUrl) {
+// Funkcja wczytująca numery telefonów z plików KML
+async function fetchPhoneNumbersFromKML(kmlUrl, phoneTag) {
   try {
     const response = await fetch(kmlUrl);
-    if (!response.ok) throw new Error(`Nie udało się załadować pliku KML: ${kmlUrl}`);
+    if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${kmlUrl}`);
     const kmlText = await response.text();
     const parser = new DOMParser();
     const kml = parser.parseFromString(kmlText, "application/xml");
     const placemarks = Array.from(kml.getElementsByTagName("Placemark"));
 
-    // Przetwarzanie danych Placemark
-    return placemarks.map((placemark) => {
+    const phoneNumbers = placemarks.reduce((acc, placemark) => {
       const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
-      const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
-      const coordinates = placemark.getElementsByTagName("coordinates")[0]?.textContent.trim();
-      const [lon, lat] = coordinates.split(",").map((coord) => parseFloat(coord));
+      let phone = null;
 
-      // Wyciąganie numeru telefonu z description
-      const phoneMatch = description?.match(/(\+?\d[\d\s-]{7,})/);
-      const phone = phoneMatch ? phoneMatch[0].replace(/\s+/g, "") : null;
+      // Pobierz numer z odpowiedniego tagu
+      if (phoneTag === "description") {
+        const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
+        phone = description ? extractPhoneNumber(description) : null;
+      } else {
+        phone = placemark.getElementsByTagName(phoneTag)[0]?.textContent.trim();
+      }
 
-      return { name, lat, lon, phone };
-    });
+      if (name) {
+        acc[name] = phone || null; // Dodaj numer telefonu lub null
+      }
+      return acc;
+    }, {});
+
+    return phoneNumbers;
   } catch (error) {
-    console.error(`Błąd podczas przetwarzania pliku KML: ${kmlUrl}`, error);
-    return [];
+    console.error(`Błąd podczas przetwarzania pliku ${kmlUrl}:`, error);
+    return {};
   }
 }
 
+// Funkcja do wyodrębniania numeru telefonu z tekstu opisu
+function extractPhoneNumber(text) {
+  const phoneRegex = /\+?\d[\d\s\-()]{7,}/; // Prosty regex do wyszukiwania numerów telefonów
+  const match = text.match(phoneRegex);
+  return match ? match[0].trim() : null;
+}
+
+// Funkcja ładująca wszystkie numery telefonów z plików KML
+async function loadPhoneNumbers() {
+  const kmlFiles = [
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml", tag: "description" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml", tag: "phone" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml", tag: "telefon" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml", tag: "description" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml", tag: "phone" },
+    { url: "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml", tag: "description" },
+  ];
+
+  const phoneNumbers = {};
+
+  for (const file of kmlFiles) {
+    const data = await fetchPhoneNumbersFromKML(file.url, file.tag);
+    Object.assign(phoneNumbers, data); // Dodaj numery do głównego obiektu
+  }
+
+  return phoneNumbers;
+}
+
 // Funkcja generująca treść popupu
-function generatePopupContent(name, lat, lon, phone) {
+function generatePopupContent(name, lat, lon, phoneNumbers) {
   let popupContent = `<strong>${name}</strong><br>`;
-  const phoneLink = phone
+
+  // Dodanie numeru telefonu
+  const phone = phoneNumbers[name] || "Brak numeru telefonu";
+  const phoneLink = phone !== "Brak numeru telefonu"
     ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
-    : "Brak numeru telefonu";
+    : phone;
   popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
@@ -80,9 +117,9 @@ function generatePopupContent(name, lat, lon, phone) {
 }
 
 // Funkcja aktualizująca popupy dla wszystkich markerów
-function updatePopups(markers) {
-  markers.forEach(({ marker, name, lat, lon, phone }) => {
-    const popupContent = generatePopupContent(name, lat, lon, phone);
+function updatePopups(markers, phoneNumbers) {
+  markers.forEach(({ marker, name, lat, lon }) => {
+    const popupContent = generatePopupContent(name, lat, lon, phoneNumbers);
     marker.bindPopup(popupContent);
   });
 }
@@ -90,28 +127,6 @@ function updatePopups(markers) {
 // Funkcja do wczytania szczegółów i aktualizacji popupów
 async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
-
-  // Wczytaj dane z plików KML
-  const kmlFiles = [
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Parkingilesne.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Miejscenabiwak.kml"
-  ];
-
-  const markers = [];
-
-  for (const kmlUrl of kmlFiles) {
-    const placemarks = await loadKMLData(kmlUrl);
-    placemarks.forEach(({ name, lat, lon, phone }) => {
-      const marker = L.marker([lat, lon]); // Tworzenie markera Leaflet
-      markers.push({ marker, name, lat, lon, phone });
-    });
-  }
-
-  updatePopups(markers); // Zaktualizuj popupy
+  const phoneNumbers = await loadPhoneNumbers(); // Wczytaj numery telefonów z plików KML
+  updatePopups(markers, phoneNumbers); // Zaktualizuj popupy dla markerów
 }

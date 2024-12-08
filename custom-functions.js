@@ -18,36 +18,29 @@ async function loadDetails() {
   }
 }
 
-// Funkcja do wyodrębniania numeru telefonu z placemarka
+// Funkcja do ekstrakcji numeru telefonu
 function extractPhone(placemark) {
-  const possibleFields = [
-    placemark.getElementsByTagName("phone")[0]?.textContent || "",
-    placemark.getElementsByTagName("description")[0]?.textContent || "",
-    placemark.getElementsByTagName("opis")[0]?.textContent || "",
-  ];
-
-  // Wyszukiwanie numeru telefonu w polach
-  for (const field of possibleFields) {
-    const phoneMatch = field.match(/(?:\+?\d[\d\s-]{7,15}\d)/); // Prosty regex dla numerów telefonów
-    if (phoneMatch) {
-      return phoneMatch[0].trim();
-    }
-  }
-  return null;
+  const phoneRegex = /\b\d{9,}\b/; // Prosty regex dla numerów telefonów
+  const description = placemark.getElementsByTagName("description")[0]?.textContent || "";
+  const phone = placemark.getElementsByTagName("phone")[0]?.textContent || "";
+  const opis = placemark.getElementsByTagName("opis")[0]?.textContent || "";
+  const phoneFromDescription = description.match(phoneRegex);
+  const phoneFromPhoneTag = phone.match(phoneRegex);
+  const phoneFromOpis = opis.match(phoneRegex);
+  return (
+    (phoneFromPhoneTag && phoneFromPhoneTag[0]) ||
+    (phoneFromDescription && phoneFromDescription[0]) ||
+    (phoneFromOpis && phoneFromOpis[0]) ||
+    null
+  );
 }
 
 // Funkcja generująca treść popupu
-function generatePopupContent(name, lat, lon, phone) {
+function generatePopupContent(name, lat, lon, phone = null) {
   let popupContent = `<strong>${name}</strong><br>`;
-
-  // Dodanie numeru telefonu
   if (phone) {
     popupContent += `Kontakt: <a href="tel:${phone}" class="phone-link">${phone}</a><br>`;
-  } else {
-    popupContent += "Brak numeru telefonu.<br>";
   }
-
-  // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
     popupContent += `
       <a href="${detailsMap[name]}" target="_blank" class="details-button">
@@ -56,29 +49,24 @@ function generatePopupContent(name, lat, lon, phone) {
   } else {
     popupContent += "Dodaj info o tej lokalizacji www.campteam.pl/dodaj.<br>";
   }
-
-  // Dodanie przycisku "Prowadź do"
   popupContent += `
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
       Prowadź
     </a>`;
-
   return popupContent;
 }
 
 // Funkcja aktualizująca popupy dla wszystkich markerów
-function updatePopups(markers, placemarks) {
-  markers.forEach(({ marker, name, lat, lon }, index) => {
-    const placemark = placemarks[index];
-    const phone = extractPhone(placemark); // Pobierz numer telefonu
-    const popupContent = generatePopupContent(name, lat, lon, phone);
+function updatePopups(markers) {
+  markers.forEach(({ marker, name, lat, lon }) => {
+    const popupContent = generatePopupContent(name, lat, lon);
     marker.bindPopup(popupContent);
   });
 }
 
 // Funkcja do wczytania szczegółów i aktualizacji popupów
-async function loadDetailsAndUpdatePopups(markers, placemarks) {
-  await loadDetails(); // Wczytaj szczegóły z pliku
-  updatePopups(markers, placemarks); // Zaktualizuj popupy dla markerów
+async function loadDetailsAndUpdatePopups(markers) {
+  await loadDetails();
+  updatePopups(markers);
 }

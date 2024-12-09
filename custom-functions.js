@@ -22,9 +22,9 @@ async function loadDetails() {
 
 // Funkcja do wyodrębniania numerów telefonów z tekstu opisu
 function extractPhoneNumber(description) {
-  const phoneRegex = /\+?\d[\d\s\-()]{7,}/; // Prosty regex do wyszukiwania numerów telefonów
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie z opcjonalnym prefiksem "Telefon:" lub "Phone:"
   const match = description.match(phoneRegex);
-  return match ? match[0].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
+  return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
 }
 
 // Funkcja wczytująca numery telefonów z plików KML
@@ -53,7 +53,7 @@ async function loadPhoneNumbers() {
         const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
         if (name && description) {
           const phone = extractPhoneNumber(description);
-          phoneNumbersMap[name] = phone || "Brak numeru telefonu";
+          phoneNumbersMap[name] = phone || "Brak numeru kontaktowego";
         }
       }
     } catch (error) {
@@ -67,8 +67,8 @@ function generatePopupContent(name, lat, lon) {
   let popupContent = `<strong>${name}</strong><br>`;
 
   // Dodanie numeru telefonu
-  const phone = phoneNumbersMap[name] || "Brak numeru telefonu";
-  const phoneLink = phone !== "Brak numeru telefonu"
+  const phone = phoneNumbersMap[name] || "Brak numeru kontaktowego";
+  const phoneLink = phone !== "Brak numeru kontaktowego"
     ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
     : phone;
   popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;

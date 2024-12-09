@@ -9,7 +9,6 @@ async function loadDetails() {
     const response = await fetch("https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/szczegoly.json");
     if (!response.ok) throw new Error("Nie udało się załadować pliku szczegóły.json");
     const data = await response.json();
-    // Konwersja danych na mapę (nazwa -> link)
     detailsMap = data.reduce((map, item) => {
       const [name, link] = item.split(",");
       map[name.trim()] = link.trim();
@@ -22,8 +21,13 @@ async function loadDetails() {
 
 // Funkcja do wyodrębniania numerów telefonów z tekstu opisu
 function extractPhoneNumber(description) {
-  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie z opcjonalnym prefiksem "Telefon:" lub "Phone:"
-  const match = description.match(phoneRegex);
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie numerów telefonów
+  const urlRegex = /https?:\/\/[^\s]+/gi; // Dopasowanie linków
+
+  // Usuń linki z opisu
+  const descriptionWithoutUrls = description.replace(urlRegex, "");
+
+  const match = descriptionWithoutUrls.match(phoneRegex);
   return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
 }
 

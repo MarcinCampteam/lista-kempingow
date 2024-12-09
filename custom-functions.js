@@ -1,5 +1,7 @@
 // Obiekt do przechowywania danych ze szczegóły.json
 let detailsMap = {};
+// Obiekt do przechowywania numerów telefonów
+let phoneNumbersMap = {};
 
 // Funkcja wczytująca dane z pliku szczegóły.json
 async function loadDetails() {
@@ -18,9 +20,58 @@ async function loadDetails() {
   }
 }
 
+// Funkcja do wyodrębniania numerów telefonów z tekstu opisu
+function extractPhoneNumber(description) {
+  const phoneRegex = /\+?\d[\d\s\-()]{7,}/; // Prosty regex do wyszukiwania numerów telefonów
+  const match = description.match(phoneRegex);
+  return match ? match[0].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
+}
+
+// Funkcja wczytująca numery telefonów z plików KML
+async function loadPhoneNumbers() {
+  const kmlFiles = [
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Miejscenabiwak.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Parkingilesne.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml",
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml",
+  ];
+
+  for (const url of kmlFiles) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${url}`);
+      const kmlText = await response.text();
+      const parser = new DOMParser();
+      const kml = parser.parseFromString(kmlText, "application/xml");
+      const placemarks = kml.getElementsByTagName("Placemark");
+
+      for (const placemark of placemarks) {
+        const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
+        const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
+        if (name && description) {
+          const phone = extractPhoneNumber(description);
+          phoneNumbersMap[name] = phone || "Brak numeru telefonu";
+        }
+      }
+    } catch (error) {
+      console.error(`Błąd podczas przetwarzania pliku ${url}:`, error);
+    }
+  }
+}
+
 // Funkcja generująca treść popupu
 function generatePopupContent(name, lat, lon) {
   let popupContent = `<strong>${name}</strong><br>`;
+
+  // Dodanie numeru telefonu
+  const phone = phoneNumbersMap[name] || "Brak numeru telefonu";
+  const phoneLink = phone !== "Brak numeru telefonu"
+    ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
+    : phone;
+  popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
@@ -57,5 +108,6 @@ function updatePopups(markers) {
 // Funkcja do wczytania szczegółów i aktualizacji popupów
 async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
+  await loadPhoneNumbers(); // Wczytaj numery telefonów z plików KML
   updatePopups(markers); // Zaktualizuj popupy dla markerów
 }

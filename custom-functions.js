@@ -103,10 +103,10 @@ function levenshteinDistance(a, b) {
   return matrix[a.length][b.length];
 }
 
-// Funkcja dopasowująca miejsce do wizytówki Google Maps
-function getGoogleMapsLink(name, lat, lon) {
+// Funkcja generująca link do Google Maps na podstawie nazwy
+function getGoogleMapsLink(name) {
   const baseSearchUrl = "https://www.google.com/maps/search/";
-  return `${baseSearchUrl}${encodeURIComponent(name)}+${lat},${lon}`;
+  return `${baseSearchUrl}${encodeURIComponent(name)}`;
 }
 
 // Funkcja generująca treść popupu
@@ -126,7 +126,7 @@ function generatePopupContent(name, lat, lon) {
   }
 
   // Dodanie przycisku do Google Maps
-  const googleMapsLink = getGoogleMapsLink(name, lat, lon);
+  const googleMapsLink = getGoogleMapsLink(name);
   popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json

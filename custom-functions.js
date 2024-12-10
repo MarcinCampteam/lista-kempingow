@@ -23,9 +23,14 @@ async function loadDetails() {
 
 // Funkcja do wyodrębniania numerów telefonów z tekstu opisu
 function extractPhoneNumber(description) {
-  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i;
-  const match = description.match(phoneRegex);
-  return match ? match[1].replace(/\s+/g, "") : null;
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie numerów telefonów
+  const urlRegex = /https?:\/\/[^\s]+/gi; // Dopasowanie linków
+
+  // Usuń linki z opisu
+  const descriptionWithoutUrls = description.replace(urlRegex, "");
+
+  const match = descriptionWithoutUrls.match(phoneRegex);
+  return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
 }
 
 // Funkcja do wyodrębniania strony www z tekstu opisu

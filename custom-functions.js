@@ -118,6 +118,13 @@ function generatePopupContent(name, lat, lon) {
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
       Prowadź
+    </a><br>`;
+
+  // Dodanie przycisku "Link do Map Google"
+  const googleMapsLink = `https://www.google.com/maps/place/${lat},${lon}`;
+  popupContent += `
+    <a href="${googleMapsLink}" target="_blank" style="display:inline-block; padding:5px 10px; border:2px solid black; color:black; text-decoration:none; font-weight:bold; margin-top:5px;">
+      Link do Map Google
     </a>`;
 
   return popupContent;

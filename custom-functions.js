@@ -4,6 +4,8 @@ let detailsMap = {};
 let phoneNumbersMap = {};
 // Obiekt do przechowywania linków do stron www
 let websiteLinksMap = {};
+// Obiekt do przechowywania nazw miejsc z pliku Parkingilesne.kml
+let excludedPlaces = new Set();
 
 // Funkcja wczytująca dane z pliku szczegóły.json
 async function loadDetails() {
@@ -23,14 +25,11 @@ async function loadDetails() {
 
 // Funkcja do wyodrębniania numerów telefonów z tekstu opisu
 function extractPhoneNumber(description) {
-  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie numerów telefonów
-  const urlRegex = /https?:\/\/[^\s]+/gi; // Dopasowanie linków
-
-  // Usuń linki z opisu
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i;
+  const urlRegex = /https?:\/\/[^\s]+/gi;
   const descriptionWithoutUrls = description.replace(urlRegex, "");
-
   const match = descriptionWithoutUrls.match(phoneRegex);
-  return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
+  return match ? match[1].replace(/\s+/g, "") : null;
 }
 
 // Funkcja do wyodrębniania strony www z tekstu opisu
@@ -38,6 +37,28 @@ function extractWebsite(description) {
   const websiteRegex = /Website:\s*(https?:\/\/[^\s<]+)/i;
   const match = description.match(websiteRegex);
   return match ? match[1].trim() : null;
+}
+
+// Funkcja wczytująca dane z Parkingilesne.kml
+async function loadExcludedPlaces() {
+  const url = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Parkingilesne.kml";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Nie udało się załadować pliku Parkingilesne.kml");
+    const kmlText = await response.text();
+    const parser = new DOMParser();
+    const kml = parser.parseFromString(kmlText, "application/xml");
+    const placemarks = kml.getElementsByTagName("Placemark");
+
+    for (const placemark of placemarks) {
+      const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
+      if (name) {
+        excludedPlaces.add(name);
+      }
+    }
+  } catch (error) {
+    console.error("Błąd podczas wczytywania miejsc z Parkingilesne.kml:", error);
+  }
 }
 
 // Funkcja wczytująca numery telefonów i linki do stron www z plików KML
@@ -56,7 +77,7 @@ async function loadKmlData() {
   for (const url of kmlFiles) {
     try {
       const response = await fetch(url);
-      if (!response.ok) throw new Error(Nie udało się załadować pliku: ${url});
+      if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${url}`);
       const kmlText = await response.text();
       const parser = new DOMParser();
       const kml = parser.parseFromString(kmlText, "application/xml");
@@ -78,77 +99,59 @@ async function loadKmlData() {
         }
       }
     } catch (error) {
-      console.error(Błąd podczas przetwarzania pliku ${url}:, error);
+      console.error(`Błąd podczas przetwarzania pliku ${url}:`, error);
     }
   }
-}
-
-// Funkcja obliczająca odległość Levenshteina między dwiema nazwami
-function levenshteinDistance(a, b) {
-  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1, // usunięcie
-        matrix[i][j - 1] + 1, // wstawienie
-        matrix[i - 1][j - 1] + cost // zamiana
-      );
-    }
-  }
-
-  return matrix[a.length][b.length];
 }
 
 // Funkcja generująca link do Google Maps na podstawie nazwy
 function getGoogleMapsLink(name) {
   const baseSearchUrl = "https://www.google.com/maps/search/";
-  return ${baseSearchUrl}${encodeURIComponent(name)};
+  return `${baseSearchUrl}${encodeURIComponent(name)}`;
 }
 
 // Funkcja generująca treść popupu
 function generatePopupContent(name, lat, lon) {
-  let popupContent = <strong>${name}</strong><br>;
+  let popupContent = `<strong>${name}</strong><br>`;
 
   // Dodanie numeru telefonu
   const phone = phoneNumbersMap[name] || "Brak numeru kontaktowego";
   const phoneLink = phone !== "Brak numeru kontaktowego"
-    ? <a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>
+    ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
     : phone;
-  popupContent += <strong>Kontakt:</strong> ${phoneLink}<br>;
+  popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
   // Dodanie strony www jako tekst (jeśli istnieje)
   if (websiteLinksMap[name]) {
-    popupContent += <strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>;
+    popupContent += `<strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>`;
   }
 
-  // Dodanie przycisku do Google Maps
-  const googleMapsLink = getGoogleMapsLink(name);
-  popupContent += <a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>;
+  // Dodanie przycisku do Google Maps tylko, jeśli miejsce nie jest w excludedPlaces
+  if (!excludedPlaces.has(name)) {
+    const googleMapsLink = getGoogleMapsLink(name);
+    popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+  }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
-    popupContent += 
+    popupContent += `
       <a href="${detailsMap[name]}" target="_blank" class="details-button">
         Pokaż szczegóły
-      </a><br>;
+      </a><br>`;
   } else {
-    popupContent += 
+    popupContent += `
       <a href="https://www.campteam.pl/dodaj/dodaj-zdj%C4%99cie-lub-opini%C4%99" 
          target="_blank" class="update-button">
         Aktualizuj
-      </a><br>;
+      </a><br>`;
   }
 
   // Dodanie przycisku "Prowadź do"
-  popupContent += 
+  popupContent += `
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
       Prowadź
-    </a>;
+    </a>`;
 
   return popupContent;
 }
@@ -164,6 +167,7 @@ function updatePopups(markers) {
 // Funkcja do wczytania szczegółów i aktualizacji popupów
 async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
+  await loadExcludedPlaces(); // Wczytaj nazwy miejsc z Parkingilesne.kml
   await loadKmlData(); // Wczytaj numery telefonów i linki z plików KML
   updatePopups(markers); // Zaktualizuj popupy dla markerów
-} 
+}

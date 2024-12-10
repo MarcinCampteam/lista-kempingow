@@ -5,7 +5,7 @@ let phoneNumbersMap = {};
 // Obiekt do przechowywania linków do stron www
 let websiteLinksMap = {};
 
-// Funkcja wczytująca dane z pliku szczegóły.json
+// Funkcja wczytująca dane ze szczegóły.json
 async function loadDetails() {
   try {
     const response = await fetch("https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/szczegoly.json");
@@ -21,26 +21,23 @@ async function loadDetails() {
   }
 }
 
-// Funkcja do wyodrębniania numerów telefonów z tekstu opisu
+// Funkcja do wyodrębniania numerów telefonów
 function extractPhoneNumber(description) {
-  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie numerów telefonów
-  const urlRegex = /https?:\/\/[^\s]+/gi; // Dopasowanie linków
-
-  // Usuń linki z opisu
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i;
+  const urlRegex = /https?:\/\/[^\s]+/gi;
   const descriptionWithoutUrls = description.replace(urlRegex, "");
-
   const match = descriptionWithoutUrls.match(phoneRegex);
-  return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
+  return match ? match[1].replace(/\s+/g, "") : null;
 }
 
-// Funkcja do wyodrębniania strony www z tekstu opisu
+// Funkcja do wyodrębniania strony www
 function extractWebsite(description) {
   const websiteRegex = /Website:\s*(https?:\/\/[^\s<]+)/i;
   const match = description.match(websiteRegex);
   return match ? match[1].trim() : null;
 }
 
-// Funkcja wczytująca numery telefonów i linki do stron www z plików KML
+// Funkcja wczytująca dane z plików KML
 async function loadKmlData() {
   const kmlFiles = [
     "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml",
@@ -83,20 +80,10 @@ async function loadKmlData() {
   }
 }
 
-// Funkcja wyszukiwania wizytówek Google Maps
-async function searchGoogleMaps(name) {
-  const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(name)}`;
-  return fetch(searchUrl)
-    .then((response) => response.url)
-    .catch(() => null);
-}
-
-// Funkcja generująca link do Google Maps na podstawie nazwy (jednoznaczny wynik)
+// Funkcja generująca link do Google Maps na podstawie nazwy
 async function getGoogleMapsLink(name) {
   const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(name)}`;
-  const response = await fetch(searchUrl, { redirect: 'follow' });
-
-  // Sprawdź, czy wynik jest jednoznaczny
+  const response = await fetch(searchUrl);
   const resultUrl = response.url;
   const isSingleResult = !resultUrl.includes('/search/');
   return isSingleResult ? resultUrl : null;
@@ -113,18 +100,18 @@ async function generatePopupContent(name, lat, lon) {
     : phone;
   popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
-  // Dodanie strony www jako tekst (jeśli istnieje)
+  // Dodanie strony www
   if (websiteLinksMap[name]) {
     popupContent += `<strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>`;
   }
 
-  // Dodanie przycisku do Google Maps (tylko dla jednoznacznych wyników)
+  // Dodanie przycisku do Google Maps
   const googleMapsLink = await getGoogleMapsLink(name);
   if (googleMapsLink) {
     popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
   }
 
-  // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
+  // Dodanie przycisku "Pokaż szczegóły"
   if (detailsMap[name]) {
     popupContent += `
       <a href="${detailsMap[name]}" target="_blank" class="details-button">
@@ -158,7 +145,7 @@ async function updatePopups(markers) {
 
 // Funkcja do wczytania szczegółów i aktualizacji popupów
 async function loadDetailsAndUpdatePopups(markers) {
-  await loadDetails(); // Wczytaj szczegóły z pliku
-  await loadKmlData(); // Wczytaj numery telefonów i linki z plików KML
-  await updatePopups(markers); // Zaktualizuj popupy dla markerów
+  await loadDetails();
+  await loadKmlData();
+  await updatePopups(markers);
 }

@@ -125,9 +125,11 @@ function generatePopupContent(name, lat, lon) {
     popupContent += `<strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>`;
   }
 
-  // Dodanie przycisku do Google Maps
+  // Dodanie przycisku do Google Maps (tylko gdy istnieje wynik wyszukiwania)
   const googleMapsLink = getGoogleMapsLink(name);
-  popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+  if (googleMapsLink) {
+    popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+  }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {

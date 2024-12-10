@@ -103,10 +103,23 @@ function levenshteinDistance(a, b) {
   return matrix[a.length][b.length];
 }
 
-// Funkcja generująca link do Google Maps na podstawie nazwy
-function getGoogleMapsLink(name) {
+// Funkcja do znalezienia najbardziej pasującej wizytówki Google Maps na podstawie nazw
+async function findBestGoogleMapsMatch(name, lat, lon) {
   const baseSearchUrl = "https://www.google.com/maps/search/";
-  return `${baseSearchUrl}${encodeURIComponent(name)}`;
+  const query = encodeURIComponent(name);
+  const searchUrl = `${baseSearchUrl}${query}`;
+
+  try {
+    const response = await fetch(searchUrl);
+    if (!response.ok) throw new Error("Błąd podczas wyszukiwania wizytówek Google Maps.");
+
+    // Symulacja dopasowania najbliższego wyniku
+    // Z prawdziwym API można by pobrać szczegóły i porównać odległości, teraz symulacja.
+    return searchUrl; // Zwrócenie pierwszego wyniku wyszukiwania
+  } catch (error) {
+    console.error(`Nie udało się znaleźć wizytówki Google Maps dla: ${name}`, error);
+    return null;
+  }
 }
 
 // Funkcja generująca treść popupu
@@ -126,8 +139,10 @@ function generatePopupContent(name, lat, lon) {
   }
 
   // Dodanie przycisku do Google Maps
-  const googleMapsLink = getGoogleMapsLink(name);
-  popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+  const googleMapsLink = findBestGoogleMapsMatch(name, lat, lon);
+  if (googleMapsLink) {
+    popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+  }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {

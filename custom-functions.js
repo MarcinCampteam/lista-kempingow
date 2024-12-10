@@ -83,6 +83,12 @@ async function loadKmlData() {
   }
 }
 
+// Funkcja generująca link wyszukiwania w Google Maps
+function generateGoogleSearchLink(name, lat, lon) {
+  const query = encodeURIComponent(`${name} ${lat},${lon}`);
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
 // Funkcja generująca treść popupu
 function generatePopupContent(name, lat, lon) {
   let popupContent = `<strong>${name}</strong><br>`;
@@ -121,9 +127,9 @@ function generatePopupContent(name, lat, lon) {
     </a><br>`;
 
   // Dodanie przycisku "Link do Map Google"
-  const googleMapsLink = `https://www.google.com/maps/place/${lat},${lon}`;
+  const googleSearchLink = generateGoogleSearchLink(name, lat, lon);
   popupContent += `
-    <a href="${googleMapsLink}" target="_blank" style="display:inline-block; padding:5px 10px; border:2px solid black; color:black; text-decoration:none; font-weight:bold; margin-top:5px;">
+    <a href="${googleSearchLink}" target="_blank" style="display:inline-block; padding:5px 10px; border:2px solid black; color:black; text-decoration:none; font-weight:bold; margin-top:5px;">
       Link do Map Google
     </a>`;
 

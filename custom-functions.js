@@ -129,7 +129,7 @@ function generatePopupContent(name, lat, lon) {
   // Dodanie przycisku do Google Maps tylko, jeśli miejsce nie jest w excludedPlaces
   if (!excludedPlaces.has(name)) {
     const googleMapsLink = getGoogleMapsLink(name);
-    popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
+    popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Wizytówki Map Google</a><br>`;
   }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
@@ -150,7 +150,7 @@ function generatePopupContent(name, lat, lon) {
   popupContent += `
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
-      Prowadź
+      Wyznacz trasę
     </a>`;
 
   return popupContent;

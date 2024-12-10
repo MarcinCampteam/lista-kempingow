@@ -36,6 +36,7 @@ function extractPhoneNumber(description) {
 // Funkcja wczytująca numery telefonów i linki do stron www z plików KML
 async function loadKmlData() {
   const kmlFiles = [
+    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Atrakcje.kml",
     "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml",
     "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml",
     "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml",
@@ -86,12 +87,9 @@ function generatePopupContent(name, lat, lon) {
     : phone;
   popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
 
-  // Dodanie przycisku "Strona www", jeśli istnieje link
+  // Dodanie strony www jako tekst (jeśli istnieje)
   if (websiteLinksMap[name]) {
-    popupContent += `
-      <a href="${websiteLinksMap[name]}" target="_blank" class="website-button" style="color:red; font-weight:bold; border: 2px solid red; padding: 5px; border-radius: 5px; text-decoration: none;">
-        Strona www
-      </a><br>`;
+    popupContent += `<strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>`;
   }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json

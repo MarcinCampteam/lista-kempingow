@@ -2,6 +2,8 @@
 let detailsMap = {};
 // Obiekt do przechowywania numerów telefonów
 let phoneNumbersMap = {};
+// Obiekt do przechowywania adresów stron WWW
+let websitesMap = {};
 
 // Funkcja wczytująca dane z pliku szczegóły.json
 async function loadDetails() {
@@ -31,38 +33,40 @@ function extractPhoneNumber(description) {
   return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
 }
 
-// Funkcja wczytująca numery telefonów z plików KML
-async function loadPhoneNumbers() {
-  const kmlFiles = [
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingi1.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Kempingiopen.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Miejscenabiwak.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Parkingilesne.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotowe.kml",
-    "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/Polanamiotoweopen.kml",
-  ];
+// Funkcja do wyodrębniania adresów stron WWW z tekstu opisu
+function extractWebsite(description) {
+  const websiteRegex = /https?:\/\/[^\s]+/i; // Dopasowanie pierwszego linku w opisie
+  const match = description.match(websiteRegex);
+  return match ? match[0] : null;
+}
 
-  for (const url of kmlFiles) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${url}`);
-      const kmlText = await response.text();
-      const parser = new DOMParser();
-      const kml = parser.parseFromString(kmlText, "application/xml");
-      const placemarks = kml.getElementsByTagName("Placemark");
+// Funkcja wczytująca numery telefonów i adresy stron WWW z pliku map.kml
+async function loadMapData() {
+  const mapKmlUrl = "https://raw.githubusercontent.com/MarcinCampteam/lista-kempingow/main/map.kml";
 
-      for (const placemark of placemarks) {
-        const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
-        const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
-        if (name && description) {
-          const phone = extractPhoneNumber(description);
-          phoneNumbersMap[name] = phone || "Brak numeru kontaktowego";
+  try {
+    const response = await fetch(mapKmlUrl);
+    if (!response.ok) throw new Error(`Nie udało się załadować pliku: ${mapKmlUrl}`);
+    const kmlText = await response.text();
+    const parser = new DOMParser();
+    const kml = parser.parseFromString(kmlText, "application/xml");
+    const placemarks = kml.getElementsByTagName("Placemark");
+
+    for (const placemark of placemarks) {
+      const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
+      const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
+      if (name && description) {
+        const phone = extractPhoneNumber(description);
+        const website = extractWebsite(description);
+
+        phoneNumbersMap[name] = phone || "Brak numeru kontaktowego";
+        if (website) {
+          websitesMap[name] = website;
         }
       }
-    } catch (error) {
-      console.error(`Błąd podczas przetwarzania pliku ${url}:`, error);
     }
+  } catch (error) {
+    console.error(`Błąd podczas przetwarzania pliku map.kml:`, error);
   }
 }
 
@@ -76,6 +80,14 @@ function generatePopupContent(name, lat, lon) {
     ? `<a href="tel:${phone}" style="color:blue; text-decoration:none;">${phone}</a>`
     : phone;
   popupContent += `<strong>Kontakt:</strong> ${phoneLink}<br>`;
+
+  // Dodanie przycisku "Strona WWW", jeśli istnieje
+  if (websitesMap[name]) {
+    popupContent += `
+      <a href="${websitesMap[name]}" target="_blank" class="website-button">
+        Strona WWW
+      </a><br>`;
+  }
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
@@ -109,9 +121,30 @@ function updatePopups(markers) {
   });
 }
 
-// Funkcja do wczytania szczegółów i aktualizacji popupów
+// Funkcja do wczytania szczegółów, danych z map.kml i aktualizacji popupów
 async function loadDetailsAndUpdatePopups(markers) {
   await loadDetails(); // Wczytaj szczegóły z pliku
-  await loadPhoneNumbers(); // Wczytaj numery telefonów z plików KML
+  await loadMapData(); // Wczytaj numery telefonów i adresy stron WWW z map.kml
   updatePopups(markers); // Zaktualizuj popupy dla markerów
 }
+
+// Dodanie stylów dla przycisku "Strona WWW"
+const style = document.createElement("style");
+style.textContent = `
+  .website-button {
+    display: inline-block;
+    margin: 5px 0;
+    padding: 5px 10px;
+    border: 2px solid red;
+    color: red;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+  }
+  .website-button:hover {
+    background-color: #ffe6e6;
+    color: #b30000;
+  }
+`;
+document.head.appendChild(style);

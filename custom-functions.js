@@ -83,10 +83,30 @@ async function loadKmlData() {
   }
 }
 
-// Funkcja generująca link wyszukiwania w Google Maps
-function generateGoogleSearchLink(name, lat, lon) {
-  const query = encodeURIComponent(`${name} ${lat},${lon}`);
-  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+// Funkcja obliczająca odległość Levenshteina między dwiema nazwami
+function levenshteinDistance(a, b) {
+  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // usunięcie
+        matrix[i][j - 1] + 1, // wstawienie
+        matrix[i - 1][j - 1] + cost // zamiana
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+}
+
+// Funkcja dopasowująca miejsce do wizytówki Google Maps
+function getGoogleMapsLink(name, lat, lon) {
+  const baseSearchUrl = "https://www.google.com/maps/search/";
+  return `${baseSearchUrl}${encodeURIComponent(name)}+${lat},${lon}`;
 }
 
 // Funkcja generująca treść popupu
@@ -104,6 +124,10 @@ function generatePopupContent(name, lat, lon) {
   if (websiteLinksMap[name]) {
     popupContent += `<strong>Strona:</strong> <a href="${websiteLinksMap[name]}" target="_blank" style="color:red; text-decoration:none;">${websiteLinksMap[name]}</a><br>`;
   }
+
+  // Dodanie przycisku do Google Maps
+  const googleMapsLink = getGoogleMapsLink(name, lat, lon);
+  popupContent += `<a href="${googleMapsLink}" target="_blank" style="display:inline-block; margin-top:5px; padding:5px 10px; border:2px solid black; color:black; text-decoration:none;">Link do Map Google</a><br>`;
 
   // Dodanie przycisku "Pokaż szczegóły", jeśli istnieje link w szczegóły.json
   if (detailsMap[name]) {
@@ -124,13 +148,6 @@ function generatePopupContent(name, lat, lon) {
     <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" 
        target="_blank" class="navigate-button">
       Prowadź
-    </a><br>`;
-
-  // Dodanie przycisku "Link do Map Google"
-  const googleSearchLink = generateGoogleSearchLink(name, lat, lon);
-  popupContent += `
-    <a href="${googleSearchLink}" target="_blank" style="display:inline-block; padding:5px 10px; border:2px solid black; color:black; text-decoration:none; font-weight:bold; margin-top:5px;">
-      Link do Map Google
     </a>`;
 
   return popupContent;

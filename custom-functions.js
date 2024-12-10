@@ -23,14 +23,16 @@ async function loadDetails() {
 
 // Funkcja do wyodrębniania numerów telefonów z tekstu opisu
 function extractPhoneNumber(description) {
-  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i; // Dopasowanie numerów telefonów
-  const urlRegex = /https?:\/\/[^\s]+/gi; // Dopasowanie linków
+  const phoneRegex = /(?:Telefon:|Phone:)?\s*(\+?\d[\d\s\-()]{7,})/i;
+  const match = description.match(phoneRegex);
+  return match ? match[1].replace(/\s+/g, "") : null;
+}
 
-  // Usuń linki z opisu
-  const descriptionWithoutUrls = description.replace(urlRegex, "");
-
-  const match = descriptionWithoutUrls.match(phoneRegex);
-  return match ? match[1].replace(/\s+/g, "") : null; // Usuń spacje w numerze telefonu
+// Funkcja do wyodrębniania strony www z tekstu opisu
+function extractWebsite(description) {
+  const websiteRegex = /Website:\s*(https?:\/\/[^\s<]+)/i;
+  const match = description.match(websiteRegex);
+  return match ? match[1].trim() : null;
 }
 
 // Funkcja wczytująca numery telefonów i linki do stron www z plików KML
@@ -58,7 +60,7 @@ async function loadKmlData() {
       for (const placemark of placemarks) {
         const name = placemark.getElementsByTagName("name")[0]?.textContent.trim();
         const description = placemark.getElementsByTagName("description")[0]?.textContent.trim();
-        const website = placemark.querySelector("Data[name='website'] value")?.textContent.trim();
+        const website = placemark.querySelector("Data[name='website'] value")?.textContent.trim() || extractWebsite(description);
 
         if (name) {
           if (description) {
